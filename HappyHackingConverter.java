@@ -108,7 +108,7 @@ class HappyHackingConverter
 		
 		CFrame f = new CFrame();
 		f.setBackground(white);
-		
+		 
 		JPanel a = new CPanel();
 		JPanel b = new CPanel();
 		
