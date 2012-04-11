@@ -1,5 +1,5 @@
 A very simple toy app with what is hopefully a fool proof intutive UI.
-Ilustrating the use of input validatio and the GridBagLayout.
+Ilustrating the use of input validation and the GridBagLayout.
 Developed on windows with Notepad++, because I am actually a *NIX developer and wanted to try windows development.
 
 Compile with:  javac HappyHackingConverter.java
