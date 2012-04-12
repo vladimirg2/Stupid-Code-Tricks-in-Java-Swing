@@ -50,36 +50,52 @@ class HappyHackingConverter
 			System.out.println("Constructed CDocumentTemperatureFilter");
 		}
 		
-		//This is supposed to check if the resulting text would be a valid temperature. 
-		//For simplicity's sake that just means any valid double. 
-		//We declare to throw bad location due to doc.getText, but that should never happen.... in theory.
+		//This function inserts or replaces the user's input in a string buffer, to create the text which would be on screen if we allowed it.
+		//We declare to throw bad location due to doc.getText, but since the paramters are coming from the farmework, that should never happen.... in theory.
 		//If insert is true we insert, if false we replace. 
 		//Length parameter only used when replacing.
-		private boolean isValidTemperature(boolean insert, FilterBypass fb, int offs,
+		private StringBuffer getTextPrototype(boolean insert, FilterBypass fb, int offs,
                              String str, int length, AttributeSet a) throws BadLocationException
 				{
+					Document doc = fb.getDocument();
+					String text = doc.getText(0, doc.getLength());
+					StringBuffer sb = new StringBuffer(text);
+					if(insert) 
+					{ 
+						sb.insert(offs, str); 
+					}
+					else
+					{
+						sb.replace(offs, offs+length, str);
+					}
+					return sb;
+				}//end of getTextPrototype
+		
+		//This function attempts to convert the text to a double.
+		//It returns a valid double if successful, NaN otherwise.
+		private double getDouble(boolean insert, FilterBypass fb, int offs,
+                             String str, int length, AttributeSet a) throws BadLocationException
+				{
+					StringBuffer sb = getTextPrototype(insert, fb, offs, str, length, a);
 					try
 					{
-						Document doc = fb.getDocument();
-						String text = doc.getText(0, doc.getLength());
-						StringBuffer sb = new StringBuffer(text);
-						if(insert) 
-						{ 
-							sb.insert(offs, str); 
-						}
-						else
-						{
-							sb.replace(offs, offs+length, str);
-						}
-						Double.parseDouble(sb.toString()); //This does not allow starting with - (minus), fix it!
-						//if the above line succeeded:
-						return true;
+						return Double.parseDouble(sb.toString()); 
 					}//try
 					catch(NumberFormatException ex)
 					{
 						Toolkit.getDefaultToolkit().beep();
-						return false; //String was not a double.
+						return Double.NaN; //String was not a number.
 					}
+				}//End of get double
+				
+		//This is supposed to check if the resulting text would be a valid temperature. 
+		//For simplicity's sake that just means any valid double. 
+		private boolean isValidTemperature(boolean insert, FilterBypass fb, int offs,
+                             String str, int length, AttributeSet a) throws BadLocationException
+				{
+					//This does not allow starting with - (minus), fix it!
+					double d = getDouble(insert, fb, offs, str, length, a);
+					return !Double.isNaN(d);//If it is NOT a NaN, then it is a valid temperature.
 				}//End of check if valid temperature
 		
 		public void insertString(FilterBypass fb, int offs,
@@ -108,7 +124,6 @@ class HappyHackingConverter
 	 
 	/*
 	 * This inner class we will use will be a slightly customized JPanel.
-	 * We are also going to start using the leading C (as in Convert) convention in class nameing. 
 	 */
 	 class CPanel extends JPanel
 	 {
