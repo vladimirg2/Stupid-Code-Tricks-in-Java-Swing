@@ -55,7 +55,7 @@ class HappyHackingConverter
 		//We declare to throw bad location due to doc.getText, but that should never happen.... in theory.
 		//If insert is true we insert, if false we replace. 
 		//Length parameter only used when replacing.
-		private void checkIfTextIsValidTemperature(boolean insert, FilterBypass fb, int offs,
+		private boolean isValidTemperature(boolean insert, FilterBypass fb, int offs,
                              String str, int length, AttributeSet a) throws BadLocationException
 				{
 					try
@@ -66,20 +66,19 @@ class HappyHackingConverter
 						if(insert) 
 						{ 
 							sb.insert(offs, str); 
-							Double.parseDouble(sb.toString()); //This does not allow starting with - (minus), fix it!
-							super.insertString(fb, offs, str, a);
 						}
 						else
 						{
 							sb.replace(offs, offs+length, str);
-							Double.parseDouble(sb.toString()); //Code duplication!
-							super.replace(fb, offs, length, str, a);
 						}
-						
+						Double.parseDouble(sb.toString()); //This does not allow starting with - (minus), fix it!
+						//if the above line succeeded:
+						return true;
 					}//try
 					catch(NumberFormatException ex)
 					{
 						Toolkit.getDefaultToolkit().beep();
+						return false; //String was not a double.
 					}
 				}//End of check if valid temperature
 		
@@ -88,7 +87,10 @@ class HappyHackingConverter
         throws BadLocationException 
 		{
 			System.out.println("in DocumentSizeFilter's insertString method");
-			checkIfTextIsValidTemperature(true, fb, offs, str, 0, a);
+			if(isValidTemperature(true, fb, offs, str, 0, a))
+			{
+				super.insertString(fb, offs, str, a);
+			}
 		}//insertString
     
 		public void replace(FilterBypass fb, int offs,
@@ -97,7 +99,10 @@ class HappyHackingConverter
 			throws BadLocationException 
 		{
 			System.out.println("in DocumentSizeFilter's replace method");
-			checkIfTextIsValidTemperature(false, fb, offs, str, length, a);
+			if(isValidTemperature(false, fb, offs, str, length, a))
+			{
+				super.replace(fb, offs, length, str, a);
+			}
 		}//replace
 	 }//End of temperature filter. 
 	 
