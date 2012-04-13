@@ -68,7 +68,6 @@ class HappyHackingConverter
 					{
 						sb.replace(offs, offs+length, str);
 					}
-					System.out.println(sb);
 					return sb;
 				}//end of getTextPrototype
 		
@@ -94,9 +93,19 @@ class HappyHackingConverter
 		private boolean isValidTemperature(boolean insert, FilterBypass fb, int offs,
                              String str, int length) throws BadLocationException
 				{
-					//This does not allow starting with - (minus), fix it!
-					double d = getDouble(insert, fb, offs, str, length);
-					return !Double.isNaN(d);//If it is NOT a NaN, then it is a valid temperature.
+					//Allow staring a temperature with a - (minus), or deleting everything and ending up with an empty field.
+					String minus = "-";
+					String blank = "";
+					StringBuffer sb = getTextPrototype(insert, fb, offs, str, length);
+					if(minus.contentEquals(sb) || blank.contentEquals(sb))
+					{
+						return true; //We allow "-" as a valid temperature despite the fact that it is not a valid double.
+					}
+					else
+					{
+						double d = getDouble(insert, fb, offs, str, length);
+						return !Double.isNaN(d);//If it is NOT a NaN, then it is a valid temperature.
+					}
 				}//End of check if valid temperature
 		
 		public void insertString(FilterBypass fb, int offs,
