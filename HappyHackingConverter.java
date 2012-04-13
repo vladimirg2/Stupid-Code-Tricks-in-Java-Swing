@@ -15,6 +15,7 @@ import java.lang.Double;
 import java.lang.StringBuffer;
 import javax.swing.border.BevelBorder;
 import java.awt.Dimension;
+import javax.swing.event.*;
 
 
 /**
@@ -26,6 +27,24 @@ import java.awt.Dimension;
  */
 class HappyHackingConverter
 {
+	//Global variables:
+	private static String minus = "-";
+	private static String blank = "";
+	private static String centegrade = "Centegrade";
+	private static String fahrenheit = "Fahrenheit";
+	private static String litre = "Liter";
+	private static String galon = "Galon";
+	private static String gram = "Gram";
+	private static String ounce = "Ounce";
+	private static String kilogram = "Kilogram";
+	private static String pound = "Pound";
+	private static String centimeter = "Centimeter";
+	private static String inch = "Inch";
+	private static String meter = "Meter";
+	private static String foot = "Foot";
+	private static String kilometer = "Kilometer";
+	private static String mile = "Mile";
+	
 	/**
 	 * I would describe the default widget colors used as soul numbing gray.
 	 * So instead we are going to use this variable as the background color throughout our toy app.
@@ -96,8 +115,6 @@ class HappyHackingConverter
                              String str, int length) throws BadLocationException
 				{
 					//Allow staring a temperature with a - (minus), or deleting everything and ending up with an empty field.
-					String minus = "-";
-					String blank = "";
 					StringBuffer sb = getTextPrototype(insert, fb, offs, str, length);
 					if(minus.contentEquals(sb) || blank.contentEquals(sb))
 					{
@@ -218,17 +235,71 @@ class HappyHackingConverter
 	/*
 	 * This inner class we will use will be a slightly customized JPanel.
 	 */
-	 class CPanel extends JPanel
+	 class CPanel extends JPanel implements DocumentListener
 	 {
+		private void getNewValueUpdatedOthers(DocumentEvent e)
+		{
+			String prop = "name";
+			Document doc = (Document)e.getDocument();
+			String s=""; s += doc.getProperty(prop);
+			System.out.println(s);
+			String text = "";
+			try
+			{
+				text = doc.getText(0, doc.getLength());
+			}
+			catch(BadLocationException ex)
+			{
+				//Since we are asking for something from 0 to doc.Length(), this shouldn't happen.
+				Toolkit.getDefaultToolkit().beep();
+			}
+			
+			if(minus.contentEquals(text) || blank.contentEquals(text))
+			{
+				//Set the corresponding items to blank.
+			}
+			else
+			{
+				try
+				{
+					double value = Double.parseDouble(text); 
+					System.out.println(value);
+				}//try
+				catch(NumberFormatException ex)
+				{
+					//This shouldn't happen thanks to the document filters.
+					Toolkit.getDefaultToolkit().beep();
+				}
+			}
+			
+		}
+		
 		public Dimension getPreferredSize()
 		{
 			return new Dimension(200,200);
 		}
+		
+		public void insertUpdate(DocumentEvent e) 
+		{
+            getNewValueUpdatedOthers(e);
+        }
+        public void removeUpdate(DocumentEvent e) 
+		{
+            getNewValueUpdatedOthers(e);
+        }
+        public void changedUpdate(DocumentEvent e) 
+		{
+            //Plain text components don't fire these events.
+			System.out.println("Changed update event fired.");
+			getNewValueUpdatedOthers(e);
+        }
 	 
-		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, DocumentFilter filter)
+		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, DocumentFilter filter, String name)
 		{
 			Dimension dim = new Dimension(100,25);
 			JTextPane textPane = new JTextPane();
+			textPane.getDocument().putProperty("name", name);
+			textPane.getDocument().addDocumentListener(this);
 			textPane.setPreferredSize(dim);
 			BevelBorder border = new BevelBorder(BevelBorder.RAISED);
 			textPane.setBorder(border);
@@ -262,7 +333,7 @@ class HappyHackingConverter
 			c.weightx = 1; 
 			c.weighty = 1;
 			CDocumentTemperatureFilter tempFilter = new CDocumentTemperatureFilter();
-			newTextPane(c, gridbag, tempFilter);
+			newTextPane(c, gridbag, tempFilter, "Temperature!");
 			
 			c = new GridBagConstraints();
 			c.gridx = 0;
@@ -274,7 +345,7 @@ class HappyHackingConverter
 			c.weighty = 2;
 			c.fill = GridBagConstraints.HORIZONTAL;
 			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter();
-			newTextPane(c, gridbag, posFilter);
+			newTextPane(c, gridbag, posFilter, "Positive Numbers");
 		}//constructor
 	 }//end of class CPanel
 	 
