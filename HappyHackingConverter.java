@@ -55,7 +55,7 @@ class HappyHackingConverter
 		//If insert is true we insert, if false we replace. 
 		//Length parameter only used when replacing.
 		private StringBuffer getTextPrototype(boolean insert, FilterBypass fb, int offs,
-                             String str, int length, AttributeSet a) throws BadLocationException
+                             String str, int length) throws BadLocationException
 				{
 					Document doc = fb.getDocument();
 					String text = doc.getText(0, doc.getLength());
@@ -68,15 +68,16 @@ class HappyHackingConverter
 					{
 						sb.replace(offs, offs+length, str);
 					}
+					System.out.println(sb);
 					return sb;
 				}//end of getTextPrototype
 		
 		//This function attempts to convert the text to a double.
 		//It returns a valid double if successful, NaN otherwise.
 		private double getDouble(boolean insert, FilterBypass fb, int offs,
-                             String str, int length, AttributeSet a) throws BadLocationException
+                             String str, int length) throws BadLocationException
 				{
-					StringBuffer sb = getTextPrototype(insert, fb, offs, str, length, a);
+					StringBuffer sb = getTextPrototype(insert, fb, offs, str, length);
 					try
 					{
 						return Double.parseDouble(sb.toString()); 
@@ -91,10 +92,10 @@ class HappyHackingConverter
 		//This is supposed to check if the resulting text would be a valid temperature. 
 		//For simplicity's sake that just means any valid double. 
 		private boolean isValidTemperature(boolean insert, FilterBypass fb, int offs,
-                             String str, int length, AttributeSet a) throws BadLocationException
+                             String str, int length) throws BadLocationException
 				{
 					//This does not allow starting with - (minus), fix it!
-					double d = getDouble(insert, fb, offs, str, length, a);
+					double d = getDouble(insert, fb, offs, str, length);
 					return !Double.isNaN(d);//If it is NOT a NaN, then it is a valid temperature.
 				}//End of check if valid temperature
 		
@@ -103,7 +104,7 @@ class HappyHackingConverter
         throws BadLocationException 
 		{
 			System.out.println("in DocumentSizeFilter's insertString method");
-			if(isValidTemperature(true, fb, offs, str, 0, a))
+			if(isValidTemperature(true, fb, offs, str, 0))
 			{
 				super.insertString(fb, offs, str, a);
 			}
@@ -115,11 +116,29 @@ class HappyHackingConverter
 			throws BadLocationException 
 		{
 			System.out.println("in DocumentSizeFilter's replace method");
-			if(isValidTemperature(false, fb, offs, str, length, a))
+			if(isValidTemperature(false, fb, offs, str, length))
 			{
 				super.replace(fb, offs, length, str, a);
 			}
 		}//replace
+		
+		public void remove(DocumentFilter.FilterBypass fb,
+                   int offs,
+                   int length)
+            throws BadLocationException	
+		{
+			System.out.println("in DocumentSizeFilter's remove method.");
+			//Insertion is just replacement of a 0 lenght string.
+			//Delete is a kind of insertion. 
+			//It's just replacement of non-zero lenght string with a 0 lenght string.
+			//So we will insert a 0 length text.
+			String str ="";
+			//And we pass in false for insertion which means replacement.
+			if(isValidTemperature(false, fb, offs, str, length))
+			{
+				super.remove(fb, offs, length);
+			}
+		}//End of remove
 	 }//End of temperature filter. 
 	 
 	/*
