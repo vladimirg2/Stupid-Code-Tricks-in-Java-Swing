@@ -13,6 +13,8 @@ import java.awt.event.*;
 import java.awt.Toolkit;
 import java.lang.Double;
 import java.lang.StringBuffer;
+import javax.swing.border.BevelBorder;
+import java.awt.Dimension;
 
 
 /**
@@ -73,7 +75,7 @@ class HappyHackingConverter
 		
 		//This function attempts to convert the text to a double.
 		//It returns a valid double if successful, NaN otherwise.
-		private double getDouble(boolean insert, FilterBypass fb, int offs,
+		protected double getDouble(boolean insert, FilterBypass fb, int offs,
                              String str, int length) throws BadLocationException
 				{
 					StringBuffer sb = getTextPrototype(insert, fb, offs, str, length);
@@ -149,12 +151,101 @@ class HappyHackingConverter
 			}
 		}//End of remove
 	 }//End of temperature filter. 
+	
+	 /*
+	 * This class will be used for weights and distances.
+	 * The math for negative weight and distances works just fine.
+	 * But we will not allow the user to enter negative weigths and distances.
+	 * So this filter is a stricter version of the temperature filter.
+	 */
+	 class CDocumentPositiveNumberFilter extends CDocumentTemperatureFilter
+	 {
+		public CDocumentPositiveNumberFilter()
+		{
+			System.out.println("Constructed CDocumentPositiveNumberFilter");
+		}
+		
+		private boolean isValidPostiveNumber(boolean insert, FilterBypass fb, int offs,
+                             String str, int length) throws BadLocationException
+		{
+			double d = getDouble(insert, fb, offs, str, length);
+			//In order evaluation, AND should test for NaN first.
+			if (!Double.isNaN(d) && d >= 0)
+			{
+				return true;
+			}
+			return false;
+		}//End of isValidPostiveNumber
+		
+		public void remove(DocumentFilter.FilterBypass fb,
+                   int offs,
+                   int length)
+            throws BadLocationException
+		{
+			String str ="";
+			if(isValidPostiveNumber(false, fb, offs, str, length))
+			{
+				super.remove(fb, offs, length);
+			}
+		}//End of remove
+		
+		public void insertString(DocumentFilter.FilterBypass fb,
+                         int offs,
+                         String str,
+                         AttributeSet a)
+                  throws BadLocationException
+		{
+			if(isValidPostiveNumber(true, fb, offs, str, 0))
+			{
+				super.insertString(fb, offs, str, a);
+			}
+		}//End of insert
+		
+		public void replace(DocumentFilter.FilterBypass fb,
+                    int offs,
+                    int length,
+                    String str,
+                    AttributeSet a)
+             throws BadLocationException
+		{
+			if(isValidPostiveNumber(false, fb, offs, str, length))
+			{
+				super.replace(fb, offs, length, str, a);
+			}
+		}//End of replace
+	 }//end of positive number filter
 	 
 	/*
 	 * This inner class we will use will be a slightly customized JPanel.
 	 */
 	 class CPanel extends JPanel
 	 {
+		public Dimension getPreferredSize()
+		{
+			return new Dimension(200,200);
+		}
+	 
+		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, DocumentFilter filter)
+		{
+			Dimension dim = new Dimension(100,25);
+			JTextPane textPane = new JTextPane();
+			textPane.setPreferredSize(dim);
+			BevelBorder border = new BevelBorder(BevelBorder.RAISED);
+			textPane.setBorder(border);
+			StyledDocument styledDoc = textPane.getStyledDocument();
+			if (styledDoc instanceof AbstractDocument) 
+			{
+				AbstractDocument doc = (AbstractDocument)styledDoc;
+				doc.setDocumentFilter(filter);
+			} 
+			else 
+			{
+				System.err.println("Text pane's document isn't an AbstractDocument!");
+				System.exit(-1);
+			}
+			gridbag.setConstraints(textPane, c);
+			add(textPane);
+		}
 		public CPanel()
 		{
 			super(new GridBagLayout());//call to super must be first statement in constructor
@@ -162,22 +253,28 @@ class HappyHackingConverter
 			
 			setBackground(white);
 			
-			JTextPane textPane = new JTextPane();
-			StyledDocument styledDoc = textPane.getStyledDocument();
-			if (styledDoc instanceof AbstractDocument) 
-			{
-				AbstractDocument doc = (AbstractDocument)styledDoc;
-				doc.setDocumentFilter(new CDocumentTemperatureFilter());
-			} 
-			else 
-			{
-				System.err.println("Text pane's document isn't an AbstractDocument!");
-				System.exit(-1);
-			}
-			
 			GridBagConstraints c = new GridBagConstraints();
-			gridbag.setConstraints(textPane, c);
-			add(textPane);
+			c.gridx = 0;
+			c.gridy = 0;
+			c.gridwidth = 2;
+			c.gridheight = 2;
+			c.ipadx = 1;
+			c.weightx = 1; 
+			c.weighty = 1;
+			CDocumentTemperatureFilter tempFilter = new CDocumentTemperatureFilter();
+			newTextPane(c, gridbag, tempFilter);
+			
+			c = new GridBagConstraints();
+			c.gridx = 0;
+			c.gridy = 2;
+			c.gridwidth = 2;
+			c.gridheight = 2;
+			c.ipadx = 1;
+			c.weightx = 2; 
+			c.weighty = 2;
+			c.fill = GridBagConstraints.HORIZONTAL;
+			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter();
+			newTextPane(c, gridbag, posFilter);
 		}//constructor
 	 }//end of class CPanel
 	 
@@ -228,8 +325,6 @@ class HappyHackingConverter
 			menuBar.add(menu);
 			setJMenuBar(menuBar);
 			
-			setSize(new Dimension(200, 200));
-			
 			setVisible(true);
 		}//end of CFrame constructor
 		
@@ -249,8 +344,12 @@ class HappyHackingConverter
 		
 		
 		CSplit split = new CSplit(JSplitPane.HORIZONTAL_SPLIT, true, a, b);
-		
-		f.getContentPane().add(split);
+		Container contentPane = f.getContentPane();
+		contentPane.add(split);
+		split.setDividerLocation(0.5);
+		f.validate();
+		f.pack();
+		f.setSize(300,300);
 	}//end of HappyHackingConverter constructor
 
     /**
