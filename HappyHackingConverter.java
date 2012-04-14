@@ -30,20 +30,7 @@ class HappyHackingConverter
 	//Global variables:
 	private static String minus = "-";
 	private static String blank = "";
-	private static String centegrade = "Centegrade";
-	private static String fahrenheit = "Fahrenheit";
-	private static String litre = "Liter";
-	private static String galon = "Galon";
-	private static String gram = "Gram";
-	private static String ounce = "Ounce";
-	private static String kilogram = "Kilogram";
-	private static String pound = "Pound";
-	private static String centimeter = "Centimeter";
-	private static String inch = "Inch";
-	private static String meter = "Meter";
-	private static String foot = "Foot";
-	private static String kilometer = "Kilometer";
-	private static String mile = "Mile";
+	
 	
 	/**
 	 * I would describe the default widget colors used as soul numbing gray.
@@ -237,42 +224,101 @@ class HappyHackingConverter
 	 */
 	 class CPanel extends JPanel implements DocumentListener
 	 {
+		//Names for each text pane:
+		/*
+			Normaly inner classes can't have static members
+			because you can't initialize them bofore initializing
+			the outer class which is not static. 
+			But I think it works for string litteral because
+			they are created at compile time. 
+			I am a bit uncomfortable with how this works,
+			an alternative would be to put the initalization of the
+			strings in the constructor beause they are not needed before that.
+		*/
+		private static final String centegrade = "Centegrade";
+		private static final String fahrenheit = "Fahrenheit";
+		private static final String litre = "Liter";
+		private static final String galon = "Galon";
+		private static final String gram = "Gram";
+		private static final String ounce = "Ounce";
+		private static final String kilogram = "Kilogram";
+		private static final String pound = "Pound";
+		private static final String centimeter = "Centimeter";
+		private static final String inch = "Inch";
+		private static final String meter = "Meter";
+		private static final String foot = "Foot";
+		private static final String kilometer = "Kilometer";
+		private static final String mile = "Mile";
+		
 		private void getNewValueUpdatedOthers(DocumentEvent e)
 		{
 			String prop = "name";
 			Document doc = (Document)e.getDocument();
-			String s=""; s += doc.getProperty(prop);
-			System.out.println(s);
+			String name=""; 
+			name += doc.getProperty(prop);
 			String text = "";
 			try
 			{
 				text = doc.getText(0, doc.getLength());
+				
+				switch(name)
+				{
+					case centegrade:
+					System.out.println("Update fahrenheit");
+					break;
+					case  fahrenheit:
+					break;
+					case  litre:
+					System.out.println("Update galon");
+					break;
+					case  galon:
+					break;
+					case  gram:
+					break;
+					case  ounce:
+					break;
+					case  kilogram:
+					break;
+					case  pound:
+					break;
+					case  centimeter:
+					break;
+					case  inch:
+					break;
+					case  meter:
+					break;
+					case  foot:
+					break;
+					case  kilometer:
+					break;
+					case  mile:
+					break;
+				}//End of switch(text) 
+				
+				if(minus.contentEquals(text) || blank.contentEquals(text))
+				{
+					//Set the corresponding items to blank.
+				}
+				else
+				{
+					try
+					{
+						double value = Double.parseDouble(text); 
+						System.out.println(value);
+					}//try
+					catch(NumberFormatException ex)
+					{
+						//This shouldn't happen thanks to the document filters.
+						Toolkit.getDefaultToolkit().beep();
+					}
+				}
 			}
 			catch(BadLocationException ex)
 			{
 				//Since we are asking for something from 0 to doc.Length(), this shouldn't happen.
 				Toolkit.getDefaultToolkit().beep();
 			}
-			
-			if(minus.contentEquals(text) || blank.contentEquals(text))
-			{
-				//Set the corresponding items to blank.
-			}
-			else
-			{
-				try
-				{
-					double value = Double.parseDouble(text); 
-					System.out.println(value);
-				}//try
-				catch(NumberFormatException ex)
-				{
-					//This shouldn't happen thanks to the document filters.
-					Toolkit.getDefaultToolkit().beep();
-				}
-			}
-			
-		}
+		}//End of get new value then update corresponding values
 		
 		public Dimension getPreferredSize()
 		{
@@ -333,7 +379,7 @@ class HappyHackingConverter
 			c.weightx = 1; 
 			c.weighty = 1;
 			CDocumentTemperatureFilter tempFilter = new CDocumentTemperatureFilter();
-			newTextPane(c, gridbag, tempFilter, "Temperature!");
+			newTextPane(c, gridbag, tempFilter, centegrade);
 			
 			c = new GridBagConstraints();
 			c.gridx = 0;
@@ -345,7 +391,7 @@ class HappyHackingConverter
 			c.weighty = 2;
 			c.fill = GridBagConstraints.HORIZONTAL;
 			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter();
-			newTextPane(c, gridbag, posFilter, "Positive Numbers");
+			newTextPane(c, gridbag, posFilter, litre);
 		}//constructor
 	 }//end of class CPanel
 	 
