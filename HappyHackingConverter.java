@@ -230,9 +230,41 @@ class HappyHackingConverter
 	 
 	 class CDistance extends ConvertibleValue
 	 {
-		 public void setMeters(Double Meters)
+		 public void setMeters(Double meters)
 		 {
-		 value = Meters;
+		 value = meters;
+		 }
+		 public Double getMilimiters()
+		 {
+		 return 1000 * value;
+		 }
+		 public Double getCentimeters()
+		 {
+		 return 100 * value;
+		 }
+		 public Double getMeters()
+		 {
+		 return value;
+		 }
+		 public Double getKiloMeters()
+		 {
+		 return value / 1000;
+		 }
+		 public Double getMiles()
+		 {
+		 return value / 1609.34;
+		 }
+		 public Double getYards()
+		 {
+		 return value * 1.09361;
+		 } 
+		 public Double getFeet()
+		 {
+		 return value * 3.28084;
+		 }
+		 public Double getInches()
+		 {
+		 return value * 39.3701;
 		 }
 	 }
 	 
@@ -242,6 +274,46 @@ class HappyHackingConverter
 		{
 		value = kilos;
 		}
+		public Double getKilos()
+		{
+		return value;
+		}
+		public Double getTonnes()
+		{
+		return value / 1000;
+		}
+		public Double getGramms()
+		{
+		return value * 1000;
+		}
+		public Double getMiligrams()
+		{
+		return value * 1000000;
+		}
+		public Double getWaterLiters()
+		{
+		return value;
+		}
+		public Double getWaterGallons()
+		{
+		return value * 0.264172;
+		}
+		public Double getImperialTons()
+		{
+		return value /  1016.04691;
+		}
+		public Double getPounds()
+		{
+		return value * 2.20462262;
+		}
+		public Double getOunce()
+		{
+		return value * 35.2739619;
+		}
+		public Double getTroyOunce()
+		{
+		return value * 32.1507466;
+		}
 	 }
 	 
 	 class CTemperature extends ConvertibleValue
@@ -249,6 +321,18 @@ class HappyHackingConverter
 		 public void setCelcius(Double celcius)
 		 {
 		 value = celcius;
+		 }
+		 public Double getCelsius()
+		 {
+		 return value;
+		 }
+		 public Double getFahrenheit()
+		 {
+		 return (((value * 9) /  5) + 32);
+		 }
+		 public void setFahrenheit(Double f)
+		 {
+		 value = (((f - 32) * 5) / 9);
 		 }
 	 }
 	 
