@@ -11,6 +11,7 @@ import javax.swing.JOptionPane;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.Toolkit;
+import java.util.*;
 import java.lang.Double;
 import java.lang.StringBuffer;
 import javax.swing.border.BevelBorder;
@@ -218,6 +219,81 @@ class HappyHackingConverter
 			}
 		}//End of replace
 	 }//end of positive number filter
+	 
+	 /*
+	 Distance, weight and temperature.
+	 */
+	 class ConvertibleValue
+	 {
+	 protected Double value;
+	 }
+	 
+	 class CDistance extends ConvertibleValue
+	 {
+		 public void setMeters(Double Meters)
+		 {
+		 value = Meters;
+		 }
+	 }
+	 
+	 class CWeight extends ConvertibleValue
+	 {
+		public void setKilograms(Double kilos)
+		{
+		value = kilos;
+		}
+	 }
+	 
+	 class CTemperature extends ConvertibleValue
+	 {
+		 public void setCelcius(Double celcius)
+		 {
+		 value = celcius;
+		 }
+	 }
+	 
+	 /*
+	 We will customize JTextPane so that it can notify
+	 instances registered with it. Thus any weight change,
+	 for example kilograms, will also update all other weights,
+	 grams, tonnes, etc.
+	 */
+	 class CTalkativeTextPane extends JTextPane implements DocumentListener
+	 {
+		public CTalkativeTextPane()
+		{
+		super();
+		registeredPanes = new TreeSet<CTalkativeTextPane>();
+		}
+		
+		//All panels registered here will notified of text chagnes.
+		public void RegisterPane(CTalkativeTextPane toBeRegistered)
+		{
+		registeredPanes.add(toBeRegistered);		
+		}
+		 
+		
+	 	public Dimension getPreferredSize()
+		{
+			return new Dimension(50,50);
+		}
+		
+		public void insertUpdate(DocumentEvent e) 
+		{
+            //getNewValueUpdatedOthers(e);
+        }
+        public void removeUpdate(DocumentEvent e) 
+		{
+            //getNewValueUpdatedOthers(e);
+        }
+        public void changedUpdate(DocumentEvent e) 
+		{
+            //Plain text components don't fire these events.
+			System.out.println("Changed update event fired.");
+			//getNewValueUpdatedOthers(e);
+		}
+		protected TreeSet <CTalkativeTextPane>registeredPanes;
+	 }
 	 
 	/*
 	 * This inner class we will use will be a slightly customized JPanel.
