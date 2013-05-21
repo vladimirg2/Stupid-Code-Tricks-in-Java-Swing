@@ -225,48 +225,46 @@ class HappyHackingConverter
 	 */
 	 class ConvertibleValue
 	 {
-	 protected Double value;
+	 public ConvertibleValue()
+	 {
+	 value = 1;
+	 }
+	 public double getValue()
+	 {
+	 return value;
+	 }
+	 public void setValue(double V)
+	 {
+	 value = V;
+	 }
+	 protected double value;
 	 }
 	 
-	 class CDistance extends ConvertibleValue
+	 enum DistanceMultipliers
 	 {
-		 public void setMeters(Double meters)
+		 METERS(1),
+		 MILIMETERS(1000),
+		 CENTIMETERS(100),
+		 KILOMETERS(0.001),
+		 MILES(0.00062137273),
+		 YARDS(1.09361),
+		 FEET(3.28084),
+		 INCHES(39.3701);
+		 private final double meters;
+		 private DistanceMultipliers(double multiplier)
 		 {
-		 value = meters;
+		 meters = multiplier;
 		 }
-		 public Double getMilimiters()
+		 public double timesValue(double value)
 		 {
-		 return 1000 * value;
+		 return (value * meters);
 		 }
-		 public Double getCentimeters()
+		 public double divValue(double value)
 		 {
-		 return 100 * value;
-		 }
-		 public Double getMeters()
-		 {
-		 return value;
-		 }
-		 public Double getKiloMeters()
-		 {
-		 return value / 1000;
-		 }
-		 public Double getMiles()
-		 {
-		 return value / 1609.34;
-		 }
-		 public Double getYards()
-		 {
-		 return value * 1.09361;
-		 } 
-		 public Double getFeet()
-		 {
-		 return value * 3.28084;
-		 }
-		 public Double getInches()
-		 {
-		 return value * 39.3701;
+		 return (value / meters);
 		 }
 	 }
+	 
 	 
 	 class CWeight extends ConvertibleValue
 	 {
@@ -344,18 +342,37 @@ class HappyHackingConverter
 	 */
 	 class CTalkativeTextPane extends JTextPane implements DocumentListener
 	 {
-		public CTalkativeTextPane()
+		public CTalkativeTextPane(ConvertibleValue V, DistanceMultipliers M)
 		{
 		super();
-		registeredPanes = new TreeSet<CTalkativeTextPane>();
+		value = V;
+		multiplier = M;
 		}
-		
-		//All panels registered here will notified of text chagnes.
-		public void RegisterPane(CTalkativeTextPane toBeRegistered)
+		/*
+		public void update(java.awt.Graphics g)
 		{
-		registeredPanes.add(toBeRegistered);		
-		}
-		 
+		System.out.println("Inside  CTalkativeTextPane update.");
+		setText(Double.toString((multiplier.timesValue(value.getValue()))));
+		super.update(g);
+		}*/
+		@Override
+        protected void paintComponent(Graphics g) 
+		{
+			//System.out.println("Inside  CTalkativeTextPane paintComponent.");
+			setText(Double.toString((multiplier.timesValue(value.getValue()))));
+            super.paintComponent(g);
+			
+        }
+
+        @Override
+        public void repaint(long tm, int x, int y, int width, int height) {
+            // This forces repaints to repaint the entire TextPane.
+            super.repaint(tm, 0, 0, getWidth(), getHeight());
+        }
+		
+		protected DistanceMultipliers multiplier;
+		protected ConvertibleValue value;
+		
 		
 	 	public Dimension getPreferredSize()
 		{
@@ -364,11 +381,31 @@ class HappyHackingConverter
 		
 		public void insertUpdate(DocumentEvent e) 
 		{
-            //getNewValueUpdatedOthers(e);
+			try
+			{
+				Document doc = (Document)e.getDocument();
+				Double newValue = new Double(doc.getText(0, doc.getLength()));
+				value.setValue(multiplier.divValue(newValue.doubleValue()));
+			}
+			catch(BadLocationException ex)
+			{
+				//Since we are asking for something from 0 to doc.Length(), this shouldn't happen.
+				Toolkit.getDefaultToolkit().beep();
+			}
         }
         public void removeUpdate(DocumentEvent e) 
 		{
-            //getNewValueUpdatedOthers(e);
+            try
+			{
+				Document doc = (Document)e.getDocument();
+				Double newValue = new Double(doc.getText(0, doc.getLength()));
+				value.setValue(multiplier.divValue(newValue.doubleValue()));
+			}
+			catch(BadLocationException ex)
+			{
+				//Since we are asking for something from 0 to doc.Length(), this shouldn't happen.
+				Toolkit.getDefaultToolkit().beep();
+			}
         }
         public void changedUpdate(DocumentEvent e) 
 		{
@@ -376,13 +413,12 @@ class HappyHackingConverter
 			System.out.println("Changed update event fired.");
 			//getNewValueUpdatedOthers(e);
 		}
-		protected TreeSet <CTalkativeTextPane>registeredPanes;
 	 }
 	 
 	/*
 	 * This inner class we will use will be a slightly customized JPanel.
 	 */
-	 class CPanel extends JPanel implements DocumentListener
+	 class CPanel extends JPanel 
 	 {
 		//Names for each text pane:
 		/*
@@ -485,27 +521,14 @@ class HappyHackingConverter
 			return new Dimension(200,200);
 		}
 		
-		public void insertUpdate(DocumentEvent e) 
-		{
-            getNewValueUpdatedOthers(e);
-        }
-        public void removeUpdate(DocumentEvent e) 
-		{
-            getNewValueUpdatedOthers(e);
-        }
-        public void changedUpdate(DocumentEvent e) 
-		{
-            //Plain text components don't fire these events.
-			System.out.println("Changed update event fired.");
-			getNewValueUpdatedOthers(e);
-        }
+		protected ConvertibleValue cValue;
 	 
 		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, DocumentFilter filter, String name)
 		{
 			Dimension dim = new Dimension(100,25);
-			JTextPane textPane = new JTextPane();
+			CTalkativeTextPane textPane = new CTalkativeTextPane(cValue, DistanceMultipliers.METERS);
 			textPane.getDocument().putProperty("name", name);
-			textPane.getDocument().addDocumentListener(this);
+			//textPane.getDocument().addDocumentListener(this);
 			textPane.setPreferredSize(dim);
 			BevelBorder border = new BevelBorder(BevelBorder.RAISED);
 			textPane.setBorder(border);
@@ -526,6 +549,7 @@ class HappyHackingConverter
 		public CPanel()
 		{
 			super(new GridBagLayout());//call to super must be first statement in constructor
+			cValue = new ConvertibleValue();
 			GridBagLayout gridbag = (GridBagLayout)getLayout();
 			
 			setBackground(white);
@@ -612,6 +636,7 @@ class HappyHackingConverter
 	{
 		//Make sure things compile.
 		System.out.println("Hello World!");
+		System.out.println(DistanceMultipliers.KILOMETERS.timesValue(1));
 		
 		CFrame f = new CFrame();
 		f.setBackground(white);
