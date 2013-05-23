@@ -45,6 +45,53 @@ class HappyHackingConverter
 	 * And if we do decide to share them with other projects we can always refactor them out.
 	 */
 
+	 
+	  /*
+	 Distance, weight and temperature.
+	 */
+	 class ConvertibleValue
+	 {
+	 public ConvertibleValue()
+	 {
+	 value = "1";
+	 }
+	 public String getValue()
+	 {
+	 return value;
+	 }
+	 public void setValue(String v)
+	 {
+	 value = v;
+	 }
+	 protected String value;
+	 }
+	 
+	 enum DistanceMultipliers
+	 {
+		 METERS(1),
+		 MILIMETERS(1000),
+		 CENTIMETERS(100),
+		 KILOMETERS(0.001),
+		 MILES(0.00062137273),
+		 YARDS(1.09361),
+		 FEET(3.28084),
+		 INCHES(39.3701);
+		 private final double meters;
+		 private DistanceMultipliers(double multiplier)
+		 {
+		 meters = multiplier;
+		 }
+		 public double timesValue(double value)
+		 {
+		 return (value * meters);
+		 }
+		 public double divValue(double value)
+		 {
+		 return (value / meters);
+		 }
+	 }
+	 
+	 
 	/**
 	 * We will want to prevent input of invalid values.
 	 * A validator will allow us to correct invalid input when the widget is about to lose focus.
@@ -54,10 +101,16 @@ class HappyHackingConverter
 	 */
 	 class CDocumentTemperatureFilter extends DocumentFilter
 	 {		
-		public CDocumentTemperatureFilter()
+		public CDocumentTemperatureFilter(ConvertibleValue cv, DistanceMultipliers m)
 		{
+			super();
+			updateValue = true;
+			cValue = cv;
+			multiplier = m;
 			System.out.println("Constructed CDocumentTemperatureFilter");
 		}
+		protected ConvertibleValue cValue;
+		protected DistanceMultipliers multiplier;
 		
 		//This function inserts or replaces the user's input in a string buffer, to create the text which would be on screen if we allowed it.
 		//We declare to throw bad location due to doc.getText, but since the paramters are coming from the farmework, that should never happen.... in theory.
@@ -114,15 +167,42 @@ class HappyHackingConverter
 						return !Double.isNaN(d);//If it is NOT a NaN, then it is a valid temperature.
 					}
 				}//End of check if valid temperature
+				
+		public void setUpdateValue(boolean b)
+		{
+			updateValue = b;
+		}
+		protected boolean updateValue;
+		
+		protected void doValueUpdate(FilterBypass fb)
+		throws BadLocationException
+		{
+			if(updateValue == true)
+				{
+					try
+					{
+					Document doc = fb.getDocument();
+					String text = doc.getText(0, doc.getLength());
+					Double value = new Double(text);
+					double newValue = multiplier.divValue(value.doubleValue());
+					cValue.setValue(Double.toString(newValue));
+					}
+					catch (NumberFormatException e)
+					{
+					//do nothing, since we allow '-'
+					}
+				}
+		}
 		
 		public void insertString(FilterBypass fb, int offs,
                              String str, AttributeSet a)
         throws BadLocationException 
 		{
-			System.out.println("in DocumentSizeFilter's insertString method");
+			System.out.printf("in DocumentSizeFilter's insertString method %s \n", str);
 			if(isValidTemperature(true, fb, offs, str, 0))
 			{
-				super.insertString(fb, offs, str, a);
+				fb.insertString(offs, str, a);
+				doValueUpdate(fb);
 			}
 		}//insertString
     
@@ -131,10 +211,11 @@ class HappyHackingConverter
 							String str, AttributeSet a)
 			throws BadLocationException 
 		{
-			System.out.println("in DocumentSizeFilter's replace method");
+			System.out.printf("in DocumentSizeFilter's replace method %s \n", str);
 			if(isValidTemperature(false, fb, offs, str, length))
 			{
-				super.replace(fb, offs, length, str, a);
+				fb.replace(offs, length, str, a);
+				doValueUpdate(fb);
 			}
 		}//replace
 		
@@ -152,7 +233,8 @@ class HappyHackingConverter
 			//And we pass in false for insertion which means replacement.
 			if(isValidTemperature(false, fb, offs, str, length))
 			{
-				super.remove(fb, offs, length);
+				fb.remove(offs, length);
+				doValueUpdate(fb);
 			}
 		}//End of remove
 	 }//End of temperature filter. 
@@ -165,8 +247,9 @@ class HappyHackingConverter
 	 */
 	 class CDocumentPositiveNumberFilter extends CDocumentTemperatureFilter
 	 {
-		public CDocumentPositiveNumberFilter()
+		public CDocumentPositiveNumberFilter(ConvertibleValue cv, DistanceMultipliers m)
 		{
+			super(cv, m);
 			System.out.println("Constructed CDocumentPositiveNumberFilter");
 		}
 		
@@ -190,7 +273,8 @@ class HappyHackingConverter
 			String str ="";
 			if(isValidPostiveNumber(false, fb, offs, str, length))
 			{
-				super.remove(fb, offs, length);
+				fb.remove(offs, length);
+				doValueUpdate(fb);
 			}
 		}//End of remove
 		
@@ -202,7 +286,8 @@ class HappyHackingConverter
 		{
 			if(isValidPostiveNumber(true, fb, offs, str, 0))
 			{
-				super.insertString(fb, offs, str, a);
+				fb.insertString(offs, str, a);
+				doValueUpdate(fb);
 			}
 		}//End of insert
 		
@@ -215,57 +300,15 @@ class HappyHackingConverter
 		{
 			if(isValidPostiveNumber(false, fb, offs, str, length))
 			{
-				super.replace(fb, offs, length, str, a);
+				fb.replace(offs, length, str, a);
+				doValueUpdate(fb);
 			}
 		}//End of replace
 	 }//end of positive number filter
 	 
-	 /*
-	 Distance, weight and temperature.
-	 */
-	 class ConvertibleValue
-	 {
-	 public ConvertibleValue()
-	 {
-	 value = 1;
-	 }
-	 public double getValue()
-	 {
-	 return value;
-	 }
-	 public void setValue(double V)
-	 {
-	 value = V;
-	 }
-	 protected double value;
-	 }
+	
 	 
-	 enum DistanceMultipliers
-	 {
-		 METERS(1),
-		 MILIMETERS(1000),
-		 CENTIMETERS(100),
-		 KILOMETERS(0.001),
-		 MILES(0.00062137273),
-		 YARDS(1.09361),
-		 FEET(3.28084),
-		 INCHES(39.3701);
-		 private final double meters;
-		 private DistanceMultipliers(double multiplier)
-		 {
-		 meters = multiplier;
-		 }
-		 public double timesValue(double value)
-		 {
-		 return (value * meters);
-		 }
-		 public double divValue(double value)
-		 {
-		 return (value / meters);
-		 }
-	 }
-	 
-	 
+	/* 
 	 class CWeight extends ConvertibleValue
 	 {
 		public void setKilograms(Double kilos)
@@ -333,14 +376,14 @@ class HappyHackingConverter
 		 value = (((f - 32) * 5) / 9);
 		 }
 	 }
-	 
+	*/ 
 	 /*
 	 We will customize JTextPane so that it can notify
 	 instances registered with it. Thus any weight change,
 	 for example kilograms, will also update all other weights,
 	 grams, tonnes, etc.
 	 */
-	 class CTalkativeTextPane extends JTextPane implements DocumentListener
+	 class CTalkativeTextPane extends JTextPane 
 	 {
 		public CTalkativeTextPane(ConvertibleValue V, DistanceMultipliers M)
 		{
@@ -348,20 +391,68 @@ class HappyHackingConverter
 		value = V;
 		multiplier = M;
 		}
-		/*
-		public void update(java.awt.Graphics g)
+		protected CDocumentTemperatureFilter filter;
+		
+		public void setDocumentFilter(CDocumentTemperatureFilter f)
 		{
-		System.out.println("Inside  CTalkativeTextPane update.");
-		setText(Double.toString((multiplier.timesValue(value.getValue()))));
-		super.update(g);
-		}*/
+		filter = f;
+		StyledDocument styledDoc = getStyledDocument();
+			if (styledDoc instanceof AbstractDocument) 
+			{
+				AbstractDocument doc = (AbstractDocument)styledDoc;
+				doc.setDocumentFilter(filter);
+			} 
+			else 
+			{
+				System.err.println("Text pane's document isn't an AbstractDocument!");
+				System.exit(-1);
+			}
+		}
+
 		@Override
         protected void paintComponent(Graphics g) 
 		{
-			//System.out.println("Inside  CTalkativeTextPane paintComponent.");
-			setText(Double.toString((multiplier.timesValue(value.getValue()))));
-            super.paintComponent(g);
+			super.paintComponent(g);
 			
+			try
+			{
+				Double valueAsDouble = new Double(value.getValue());
+				StyledDocument doc = getStyledDocument();
+				String actualValue = Double.toString((multiplier.timesValue(valueAsDouble.doubleValue())));
+				//System.out.printf("Paint component actualValue = %s \n", actualValue);
+				
+				String displayedValue;
+				try
+				{
+				displayedValue = doc.getText(0, doc.getLength());
+				//System.out.printf("Paint cdisplayedValuee = %s \n", actualValue);
+				}
+				catch(BadLocationException e)
+				{
+				displayedValue = "";
+				//Beep?
+				}
+				if(actualValue.equals(displayedValue) == false)
+				{
+				System.out.println("Repaint required");
+					try 
+					{ 
+						filter.setUpdateValue(false);
+						doc.remove(0, doc.getLength());
+						doc.insertString(0, actualValue, null); 
+						filter.setUpdateValue(true);
+					}
+					catch(BadLocationException e) 
+					{
+						//Beep?
+					}
+				}
+			}			
+			catch (NumberFormatException e)
+			{
+			//Do nothing since we allow things like '-'.
+			}
+						
         }
 
         @Override
@@ -379,13 +470,14 @@ class HappyHackingConverter
 			return new Dimension(50,50);
 		}
 		
-		public void insertUpdate(DocumentEvent e) 
+		/*public void insertUpdate(DocumentEvent e) 
 		{
 			try
 			{
 				Document doc = (Document)e.getDocument();
 				Double newValue = new Double(doc.getText(0, doc.getLength()));
 				value.setValue(multiplier.divValue(newValue.doubleValue()));
+				 System.out.printf("Vaaaalue set to &f \n", value);
 			}
 			catch(BadLocationException ex)
 			{
@@ -400,6 +492,7 @@ class HappyHackingConverter
 				Document doc = (Document)e.getDocument();
 				Double newValue = new Double(doc.getText(0, doc.getLength()));
 				value.setValue(multiplier.divValue(newValue.doubleValue()));
+				 System.out.printf("Vlue set to &f \n", value);
 			}
 			catch(BadLocationException ex)
 			{
@@ -412,7 +505,7 @@ class HappyHackingConverter
             //Plain text components don't fire these events.
 			System.out.println("Changed update event fired.");
 			//getNewValueUpdatedOthers(e);
-		}
+		}*/
 	 }
 	 
 	/*
@@ -523,7 +616,7 @@ class HappyHackingConverter
 		
 		protected ConvertibleValue cValue;
 	 
-		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, DocumentFilter filter, String name)
+		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, String name)
 		{
 			Dimension dim = new Dimension(100,25);
 			CTalkativeTextPane textPane = new CTalkativeTextPane(cValue, DistanceMultipliers.METERS);
@@ -532,17 +625,7 @@ class HappyHackingConverter
 			textPane.setPreferredSize(dim);
 			BevelBorder border = new BevelBorder(BevelBorder.RAISED);
 			textPane.setBorder(border);
-			StyledDocument styledDoc = textPane.getStyledDocument();
-			if (styledDoc instanceof AbstractDocument) 
-			{
-				AbstractDocument doc = (AbstractDocument)styledDoc;
-				doc.setDocumentFilter(filter);
-			} 
-			else 
-			{
-				System.err.println("Text pane's document isn't an AbstractDocument!");
-				System.exit(-1);
-			}
+			textPane.setDocumentFilter(filter);
 			gridbag.setConstraints(textPane, c);
 			add(textPane);
 		}
@@ -562,7 +645,7 @@ class HappyHackingConverter
 			c.ipadx = 1;
 			c.weightx = 1; 
 			c.weighty = 1;
-			CDocumentTemperatureFilter tempFilter = new CDocumentTemperatureFilter();
+			CDocumentTemperatureFilter tempFilter = new CDocumentTemperatureFilter(cValue, DistanceMultipliers.METERS);
 			newTextPane(c, gridbag, tempFilter, centegrade);
 			
 			c = new GridBagConstraints();
@@ -574,7 +657,7 @@ class HappyHackingConverter
 			c.weightx = 2; 
 			c.weighty = 2;
 			c.fill = GridBagConstraints.HORIZONTAL;
-			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter();
+			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS);
 			newTextPane(c, gridbag, posFilter, litre);
 		}//constructor
 	 }//end of class CPanel
