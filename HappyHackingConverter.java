@@ -53,17 +53,17 @@ class HappyHackingConverter
 	 {
 	 public ConvertibleValue()
 	 {
-	 value = "1";
+	 value = 1;
 	 }
-	 public String getValue()
+	 public double getValue()
 	 {
 	 return value;
 	 }
-	 public void setValue(String v)
+	 public void setValue(double v)
 	 {
 	 value = v;
 	 }
-	 protected String value;
+	 protected double value;
 	 }
 	 
 	 enum DistanceMultipliers
@@ -185,7 +185,8 @@ class HappyHackingConverter
 					String text = doc.getText(0, doc.getLength());
 					Double value = new Double(text);
 					double newValue = multiplier.divValue(value.doubleValue());
-					cValue.setValue(Double.toString(newValue));
+					cValue.setValue(newValue);
+					//System.out.printf("doValueUpdate new string value = %s \n", newStringValue);
 					}
 					catch (NumberFormatException e)
 					{
@@ -416,9 +417,8 @@ class HappyHackingConverter
 			
 			try
 			{
-				Double valueAsDouble = new Double(value.getValue());
 				StyledDocument doc = getStyledDocument();
-				String actualValue = Double.toString((multiplier.timesValue(valueAsDouble.doubleValue())));
+				double actualValue = (multiplier.timesValue(value.getValue()));
 				//System.out.printf("Paint component actualValue = %s \n", actualValue);
 				
 				String displayedValue;
@@ -432,19 +432,23 @@ class HappyHackingConverter
 				displayedValue = "";
 				//Beep?
 				}
-				if(actualValue.equals(displayedValue) == false)
+				double displayedValueAsDouble = Double.parseDouble(displayedValue);
+				if(actualValue != displayedValueAsDouble)
 				{
 				System.out.println("Repaint required");
 					try 
 					{ 
 						filter.setUpdateValue(false);
 						doc.remove(0, doc.getLength());
-						doc.insertString(0, actualValue, null); 
-						filter.setUpdateValue(true);
+						doc.insertString(0, Double.toString(actualValue), null); 
 					}
 					catch(BadLocationException e) 
 					{
 						//Beep?
+					}
+					finally
+					{
+					filter.setUpdateValue(true);
 					}
 				}
 			}			
@@ -648,7 +652,7 @@ class HappyHackingConverter
 			CDocumentTemperatureFilter tempFilter = new CDocumentTemperatureFilter(cValue, DistanceMultipliers.METERS);
 			newTextPane(c, gridbag, tempFilter, centegrade);
 			
-			c = new GridBagConstraints();
+			/*c = new GridBagConstraints();
 			c.gridx = 0;
 			c.gridy = 2;
 			c.gridwidth = 2;
@@ -658,7 +662,7 @@ class HappyHackingConverter
 			c.weighty = 2;
 			c.fill = GridBagConstraints.HORIZONTAL;
 			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS);
-			newTextPane(c, gridbag, posFilter, litre);
+			newTextPane(c, gridbag, posFilter, litre);*/
 		}//constructor
 	 }//end of class CPanel
 	 
