@@ -139,6 +139,10 @@ class HappyHackingConverter
                              String str, int length) throws BadLocationException
 				{
 					StringBuffer sb = getTextPrototype(insert, fb, offs, str, length);
+					if(sb.toString().isEmpty())
+					{
+					return 0;
+					}
 					try
 					{
 						return Double.parseDouble(sb.toString()); 
@@ -193,6 +197,12 @@ class HappyHackingConverter
 					//do nothing, since we allow '-'
 					}
 				}
+				else
+				{
+					Document doc = fb.getDocument();
+					String text = doc.getText(0, doc.getLength());
+					System.out.printf("NotDoValueUpdate new string value = %s \n", text);
+				}
 		}
 		
 		public void insertString(FilterBypass fb, int offs,
@@ -236,6 +246,7 @@ class HappyHackingConverter
 			{
 				fb.remove(offs, length);
 				doValueUpdate(fb);
+				System.out.printf("Removed from %d to %d \n", offs, length);
 			}
 		}//End of remove
 	 }//End of temperature filter. 
@@ -271,11 +282,13 @@ class HappyHackingConverter
                    int length)
             throws BadLocationException
 		{
+		System.out.println("In CDocumentPositiveNumberFilter remove.");
 			String str ="";
 			if(isValidPostiveNumber(false, fb, offs, str, length))
 			{
 				fb.remove(offs, length);
 				doValueUpdate(fb);
+				System.out.printf("Removed from %d to %d \n", offs, length);
 			}
 		}//End of remove
 		
@@ -419,7 +432,7 @@ class HappyHackingConverter
 			{
 				StyledDocument doc = getStyledDocument();
 				double actualValue = (multiplier.timesValue(value.getValue()));
-				//System.out.printf("Paint component actualValue = %s \n", actualValue);
+				String actualValueAsString = Double.toString(actualValue);
 				
 				String displayedValue;
 				try
@@ -440,7 +453,10 @@ class HappyHackingConverter
 					{ 
 						filter.setUpdateValue(false);
 						doc.remove(0, doc.getLength());
-						doc.insertString(0, Double.toString(actualValue), null); 
+						System.out.printf("XXXX Called remove from %d to %d \n", 0, doc.getLength());
+						doc.insertString(0, actualValueAsString, null); 
+						System.out.printf("Paint component actualValue = %s \n", actualValueAsString);
+				
 					}
 					catch(BadLocationException e) 
 					{
@@ -652,7 +668,7 @@ class HappyHackingConverter
 			CDocumentTemperatureFilter tempFilter = new CDocumentTemperatureFilter(cValue, DistanceMultipliers.METERS);
 			newTextPane(c, gridbag, tempFilter, centegrade);
 			
-			/*c = new GridBagConstraints();
+			c = new GridBagConstraints();
 			c.gridx = 0;
 			c.gridy = 2;
 			c.gridwidth = 2;
@@ -662,7 +678,7 @@ class HappyHackingConverter
 			c.weighty = 2;
 			c.fill = GridBagConstraints.HORIZONTAL;
 			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS);
-			newTextPane(c, gridbag, posFilter, litre);*/
+			newTextPane(c, gridbag, posFilter, litre);
 		}//constructor
 	 }//end of class CPanel
 	 
@@ -729,7 +745,7 @@ class HappyHackingConverter
 		f.setBackground(white);
 		 
 		JPanel a = new CPanel();
-		JPanel b = new CPanel();
+		JPanel b = new JPanel();
 		
 		
 		CSplit split = new CSplit(JSplitPane.HORIZONTAL_SPLIT, true, a, b);
