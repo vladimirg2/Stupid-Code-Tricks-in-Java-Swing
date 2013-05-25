@@ -92,6 +92,55 @@ class HappyHackingConverter
 	 }
 	 
 	 
+	 	/**
+     * And lastly the frame class to contain everything.
+     */
+	class CFrame extends JFrame 
+	{
+		public CFrame() 
+		{
+			super("Converter between Imperial and Metric.");
+			
+			setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+			
+			JMenu menu = new JMenu("Application");
+			menu.setBackground(white);
+			menu.setMnemonic(KeyEvent.VK_A);
+			
+			//quit item
+			JMenuItem item = new JMenuItem("Quit");
+			item.setBackground(white);
+			item.setMnemonic(KeyEvent.VK_Q);
+			item.addActionListener(new ActionListener() 
+			{
+				public void actionPerformed(ActionEvent e) 
+				{
+					System.out.println("Quit request");
+					System.gc();
+					System.exit(0);
+				}
+			}
+			);
+			menu.add(item);
+
+			JMenuBar menuBar = new JMenuBar();
+			menuBar.setBackground(white);
+			menuBar.add(menu);
+			setJMenuBar(menuBar);
+			
+			setVisible(true);
+		}//end of CFrame constructor
+		
+		public void forceRedraw()
+		{
+			getContentPane().validate();
+			getContentPane().repaint();
+		}
+		
+	}//end of CFrame class.
+	 
+	 
+	 
 	/**
 	 * We will want to prevent input of invalid values.
 	 * A validator will allow us to correct invalid input when the widget is about to lose focus.
@@ -101,16 +150,18 @@ class HappyHackingConverter
 	 */
 	 class CDocumentTemperatureFilter extends DocumentFilter
 	 {		
-		public CDocumentTemperatureFilter(ConvertibleValue cv, DistanceMultipliers m)
+		public CDocumentTemperatureFilter(ConvertibleValue cv, DistanceMultipliers m, CFrame frame)
 		{
 			super();
 			updateValue = true;
 			cValue = cv;
 			multiplier = m;
+			topContainer = frame;
 			System.out.println("Constructed CDocumentTemperatureFilter");
 		}
 		protected ConvertibleValue cValue;
 		protected DistanceMultipliers multiplier;
+		protected CFrame topContainer;
 		
 		//This function inserts or replaces the user's input in a string buffer, to create the text which would be on screen if we allowed it.
 		//We declare to throw bad location due to doc.getText, but since the paramters are coming from the farmework, that should never happen.... in theory.
@@ -181,12 +232,13 @@ class HappyHackingConverter
 		protected void doValueUpdate(FilterBypass fb)
 		throws BadLocationException
 		{
+			Document doc = fb.getDocument();
+			String text = doc.getText(0, doc.getLength());
+			
 			if(updateValue == true)
 				{
 					try
 					{
-					Document doc = fb.getDocument();
-					String text = doc.getText(0, doc.getLength());
 					Double value = new Double(text);
 					double newValue = multiplier.divValue(value.doubleValue());
 					cValue.setValue(newValue);
@@ -199,10 +251,9 @@ class HappyHackingConverter
 				}
 				else
 				{
-					Document doc = fb.getDocument();
-					String text = doc.getText(0, doc.getLength());
 					System.out.printf("NotDoValueUpdate new string value = %s \n", text);
 				}
+				topContainer.forceRedraw();
 		}
 		
 		public void insertString(FilterBypass fb, int offs,
@@ -259,9 +310,9 @@ class HappyHackingConverter
 	 */
 	 class CDocumentPositiveNumberFilter extends CDocumentTemperatureFilter
 	 {
-		public CDocumentPositiveNumberFilter(ConvertibleValue cv, DistanceMultipliers m)
+		public CDocumentPositiveNumberFilter(ConvertibleValue cv, DistanceMultipliers m, CFrame frame)
 		{
-			super(cv, m);
+			super(cv, m, frame);
 			System.out.println("Constructed CDocumentPositiveNumberFilter");
 		}
 		
@@ -649,7 +700,7 @@ class HappyHackingConverter
 			gridbag.setConstraints(textPane, c);
 			add(textPane);
 		}
-		public CPanel()
+		public CPanel(CFrame frame)
 		{
 			super(new GridBagLayout());//call to super must be first statement in constructor
 			cValue = new ConvertibleValue();
@@ -665,7 +716,7 @@ class HappyHackingConverter
 			c.ipadx = 1;
 			c.weightx = 1; 
 			c.weighty = 1;
-			CDocumentTemperatureFilter tempFilter = new CDocumentTemperatureFilter(cValue, DistanceMultipliers.METERS);
+			CDocumentTemperatureFilter tempFilter = new CDocumentTemperatureFilter(cValue, DistanceMultipliers.METERS, frame);
 			newTextPane(c, gridbag, tempFilter, centegrade);
 			
 			c = new GridBagConstraints();
@@ -677,7 +728,7 @@ class HappyHackingConverter
 			c.weightx = 2; 
 			c.weighty = 2;
 			c.fill = GridBagConstraints.HORIZONTAL;
-			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS);
+			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS, frame);
 			newTextPane(c, gridbag, posFilter, litre);
 		}//constructor
 	 }//end of class CPanel
@@ -693,46 +744,7 @@ class HappyHackingConverter
 		}
 	}//end of CSPlit class.
 
-	/**
-     * And lastly the frame class to contain everything.
-     */
-	class CFrame extends JFrame 
-	{
-		public CFrame() 
-		{
-			super("Converter between Imperial and Metric.");
-			
-			setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-			
-			JMenu menu = new JMenu("Application");
-			menu.setBackground(white);
-			menu.setMnemonic(KeyEvent.VK_A);
-			
-			//quit item
-			JMenuItem item = new JMenuItem("Quit");
-			item.setBackground(white);
-			item.setMnemonic(KeyEvent.VK_Q);
-			item.addActionListener(new ActionListener() 
-			{
-				public void actionPerformed(ActionEvent e) 
-				{
-					System.out.println("Quit request");
-					System.gc();
-					System.exit(0);
-				}
-			}
-			);
-			menu.add(item);
 
-			JMenuBar menuBar = new JMenuBar();
-			menuBar.setBackground(white);
-			menuBar.add(menu);
-			setJMenuBar(menuBar);
-			
-			setVisible(true);
-		}//end of CFrame constructor
-		
-	}//end of CFrame class.
 	
 	//Constructor
 	public HappyHackingConverter()
@@ -744,7 +756,7 @@ class HappyHackingConverter
 		CFrame f = new CFrame();
 		f.setBackground(white);
 		 
-		JPanel a = new CPanel();
+		JPanel a = new CPanel(f);
 		JPanel b = new JPanel();
 		
 		
