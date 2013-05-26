@@ -34,7 +34,7 @@ class HappyHackingConverter
 	
 	
 	/**
-	 * I would describe the default widget colors used as soul numbing gray.
+	 * I would describe the default widget colors used as soul numbingly gray.
 	 * So instead we are going to use this variable as the background color throughout our toy app.
 	 */
 	private final static Color white = new Color(255,255,255);
@@ -47,13 +47,15 @@ class HappyHackingConverter
 
 	 
 	  /*
-	 Distance, weight and temperature.
+	 A single instance of this class will be shared 
+	 between all units of any one type. 
+	 Thus centemeters, meters, kilometers, etc share one intance.
 	 */
 	 class ConvertibleValue
 	 {
 	 public ConvertibleValue()
 	 {
-	 value = 1;
+	 value = 1; //Default 
 	 }
 	 public double getValue()
 	 {
@@ -66,6 +68,9 @@ class HappyHackingConverter
 	 protected double value;
 	 }
 	 
+	 /*
+	 An enum to handle conversion between distance units.
+	 */
 	 enum DistanceMultipliers
 	 {
 		 METERS(1),
@@ -76,24 +81,31 @@ class HappyHackingConverter
 		 YARDS(1.09361),
 		 FEET(3.28084),
 		 INCHES(39.3701);
-		 private final double meters;
-		 private DistanceMultipliers(double multiplier)
+		 private final double factor;
+		 private DistanceMultipliers(double f)
 		 {
-		 meters = multiplier;
+			factor = f;
 		 }
 		 public double timesValue(double value)
 		 {
-		 return (value * meters);
+		 return (value * factor);
 		 }
 		 public double divValue(double value)
 		 {
-		 return (value / meters);
+		 return (value / factor);
+		 }
+		 public double getValue()
+		 {
+		 return factor;
 		 }
 	 }
 	 
 	 
-	 	/**
-     * And lastly the frame class to contain everything.
+	 /*
+     * A frame class to contain all the visual components.
+	 * This class also provides a way for force the redrawing
+	 * of everthing inside it. As the user modifies any unit
+	 * all other units will be updated and forced to redraw.
      */
 	class CFrame extends JFrame 
 	{
@@ -131,6 +143,9 @@ class HappyHackingConverter
 			setVisible(true);
 		}//end of CFrame constructor
 		
+		/*
+		* Called to force redrawing of everything.
+		*/
 		public void forceRedraw()
 		{
 			getContentPane().validate();
@@ -146,6 +161,10 @@ class HappyHackingConverter
 	 * A validator will allow us to correct invalid input when the widget is about to lose focus.
 	 * How ever what we want is to prevent the appearence of invalid input at all.
 	 * This is why we need a customized document filter.
+	 * This class also takes a refernce to the shared convertible value instance.
+	 * A multiplier instance to do the actual conversions.
+	 * And a pointer to the parent frame so that this instance can force the redraw of
+	 * everything contained in the frame.
 	 * And with this class we are  going to start using the leading C (as in Convert) convention in class naming. 
 	 */
 	 class CDocumentTemperatureFilter extends DocumentFilter
@@ -192,7 +211,7 @@ class HappyHackingConverter
 					StringBuffer sb = getTextPrototype(insert, fb, offs, str, length);
 					if(sb.toString().isEmpty())
 					{
-					return 0;
+					return 0; //We treat an empty string as 0.
 					}
 					try
 					{
@@ -200,7 +219,7 @@ class HappyHackingConverter
 					}//try
 					catch(NumberFormatException ex)
 					{
-						Toolkit.getDefaultToolkit().beep();
+						Toolkit.getDefaultToolkit().beep();//FIXME: remvoe this.
 						return Double.NaN; //String was not a number.
 					}
 				}//End of get double
@@ -223,12 +242,15 @@ class HappyHackingConverter
 					}
 				}//End of check if valid temperature
 				
+		//The shared value instanc is update only when this is true.
 		public void setUpdateValue(boolean b)
 		{
 			updateValue = b;
 		}
 		protected boolean updateValue;
 		
+		// Updates the shared value instance if updateValue is true.
+		// Always forces the redraw of everything.
 		protected void doValueUpdate(FilterBypass fb)
 		throws BadLocationException
 		{
@@ -239,10 +261,11 @@ class HappyHackingConverter
 				{
 					try
 					{
+					System.out.printf("doValueUpdate text coming is is: %s \n", text);
 					Double value = new Double(text);
 					double newValue = multiplier.divValue(value.doubleValue());
 					cValue.setValue(newValue);
-					//System.out.printf("doValueUpdate new string value = %s \n", newStringValue);
+					System.out.printf("doValueUpdate new string value = %s \n", Double.toString(newValue));
 					}
 					catch (NumberFormatException e)
 					{
@@ -313,7 +336,7 @@ class HappyHackingConverter
 		public CDocumentPositiveNumberFilter(ConvertibleValue cv, DistanceMultipliers m, CFrame frame)
 		{
 			super(cv, m, frame);
-			System.out.println("Constructed CDocumentPositiveNumberFilter");
+			System.out.printf("Constructed CDocumentPositiveNumberFilter with multiplier %f \n", m.getValue());
 		}
 		
 		private boolean isValidPostiveNumber(boolean insert, FilterBypass fb, int offs,
@@ -371,90 +394,18 @@ class HappyHackingConverter
 		}//End of replace
 	 }//end of positive number filter
 	 
-	
-	 
-	/* 
-	 class CWeight extends ConvertibleValue
-	 {
-		public void setKilograms(Double kilos)
-		{
-		value = kilos;
-		}
-		public Double getKilos()
-		{
-		return value;
-		}
-		public Double getTonnes()
-		{
-		return value / 1000;
-		}
-		public Double getGramms()
-		{
-		return value * 1000;
-		}
-		public Double getMiligrams()
-		{
-		return value * 1000000;
-		}
-		public Double getWaterLiters()
-		{
-		return value;
-		}
-		public Double getWaterGallons()
-		{
-		return value * 0.264172;
-		}
-		public Double getImperialTons()
-		{
-		return value /  1016.04691;
-		}
-		public Double getPounds()
-		{
-		return value * 2.20462262;
-		}
-		public Double getOunce()
-		{
-		return value * 35.2739619;
-		}
-		public Double getTroyOunce()
-		{
-		return value * 32.1507466;
-		}
-	 }
-	 
-	 class CTemperature extends ConvertibleValue
-	 {
-		 public void setCelcius(Double celcius)
-		 {
-		 value = celcius;
-		 }
-		 public Double getCelsius()
-		 {
-		 return value;
-		 }
-		 public Double getFahrenheit()
-		 {
-		 return (((value * 9) /  5) + 32);
-		 }
-		 public void setFahrenheit(Double f)
-		 {
-		 value = (((f - 32) * 5) / 9);
-		 }
-	 }
-	*/ 
+
 	 /*
-	 We will customize JTextPane so that it can notify
-	 instances registered with it. Thus any weight change,
-	 for example kilograms, will also update all other weights,
-	 grams, tonnes, etc.
+	 We will customize JTextPane so that it takes references
+	 to a shared convertible value instance and to a converter instance.
 	 */
 	 class CTalkativeTextPane extends JTextPane 
 	 {
 		public CTalkativeTextPane(ConvertibleValue V, DistanceMultipliers M)
 		{
 		super();
-		value = V;
-		multiplier = M;
+		value = V; //Shared value instance
+		multiplier = M; //Converter
 		}
 		protected CDocumentTemperatureFilter filter;
 		
@@ -474,14 +425,21 @@ class HappyHackingConverter
 			}
 		}
 
+		/*
+		Gets the displayed value, and uses the converter to conver the
+		shared value to unit this instance is supposed to represent.
+		If the displayed value and shared value are different,
+		then we turn off our document filter and update our value
+		to match the shared value. We re-enable to document filter afterwards.
+		*/
 		@Override
         protected void paintComponent(Graphics g) 
 		{
 			super.paintComponent(g);
-			
 			try
 			{
 				StyledDocument doc = getStyledDocument();
+				System.out.printf("The fucking multiplier is: %f \n", multiplier.getValue());
 				double actualValue = (multiplier.timesValue(value.getValue()));
 				String actualValueAsString = Double.toString(actualValue);
 				
@@ -489,7 +447,7 @@ class HappyHackingConverter
 				try
 				{
 				displayedValue = doc.getText(0, doc.getLength());
-				//System.out.printf("Paint cdisplayedValuee = %s \n", actualValue);
+				System.out.printf("Paint cdisplayedValuee = %f \n", actualValue);
 				}
 				catch(BadLocationException e)
 				{
@@ -528,55 +486,14 @@ class HappyHackingConverter
 
         @Override
         public void repaint(long tm, int x, int y, int width, int height) {
-            // This forces repaints to repaint the entire TextPane.
+            // This forces repaint to repaint the entire TextPane.
             super.repaint(tm, 0, 0, getWidth(), getHeight());
         }
 		
 		protected DistanceMultipliers multiplier;
 		protected ConvertibleValue value;
 		
-		
-	 	public Dimension getPreferredSize()
-		{
-			return new Dimension(50,50);
-		}
-		
-		/*public void insertUpdate(DocumentEvent e) 
-		{
-			try
-			{
-				Document doc = (Document)e.getDocument();
-				Double newValue = new Double(doc.getText(0, doc.getLength()));
-				value.setValue(multiplier.divValue(newValue.doubleValue()));
-				 System.out.printf("Vaaaalue set to &f \n", value);
-			}
-			catch(BadLocationException ex)
-			{
-				//Since we are asking for something from 0 to doc.Length(), this shouldn't happen.
-				Toolkit.getDefaultToolkit().beep();
-			}
-        }
-        public void removeUpdate(DocumentEvent e) 
-		{
-            try
-			{
-				Document doc = (Document)e.getDocument();
-				Double newValue = new Double(doc.getText(0, doc.getLength()));
-				value.setValue(multiplier.divValue(newValue.doubleValue()));
-				 System.out.printf("Vlue set to &f \n", value);
-			}
-			catch(BadLocationException ex)
-			{
-				//Since we are asking for something from 0 to doc.Length(), this shouldn't happen.
-				Toolkit.getDefaultToolkit().beep();
-			}
-        }
-        public void changedUpdate(DocumentEvent e) 
-		{
-            //Plain text components don't fire these events.
-			System.out.println("Changed update event fired.");
-			//getNewValueUpdatedOthers(e);
-		}*/
+
 	 }
 	 
 	/*
@@ -610,87 +527,13 @@ class HappyHackingConverter
 		private static final String kilometer = "Kilometer";
 		private static final String mile = "Mile";
 		
-		private void getNewValueUpdatedOthers(DocumentEvent e)
-		{
-			String prop = "name";
-			Document doc = (Document)e.getDocument();
-			String name=""; 
-			name += doc.getProperty(prop);
-			String text = "";
-			try
-			{
-				text = doc.getText(0, doc.getLength());
-				
-				switch(name)
-				{
-					case centegrade:
-					System.out.println("Update fahrenheit");
-					break;
-					case  fahrenheit:
-					break;
-					case  litre:
-					System.out.println("Update galon");
-					break;
-					case  galon:
-					break;
-					case  gram:
-					break;
-					case  ounce:
-					break;
-					case  kilogram:
-					break;
-					case  pound:
-					break;
-					case  centimeter:
-					break;
-					case  inch:
-					break;
-					case  meter:
-					break;
-					case  foot:
-					break;
-					case  kilometer:
-					break;
-					case  mile:
-					break;
-				}//End of switch(text) 
-				
-				if(minus.contentEquals(text) || blank.contentEquals(text))
-				{
-					//Set the corresponding items to blank.
-				}
-				else
-				{
-					try
-					{
-						double value = Double.parseDouble(text); 
-						System.out.println(value);
-					}//try
-					catch(NumberFormatException ex)
-					{
-						//This shouldn't happen thanks to the document filters.
-						Toolkit.getDefaultToolkit().beep();
-					}
-				}
-			}
-			catch(BadLocationException ex)
-			{
-				//Since we are asking for something from 0 to doc.Length(), this shouldn't happen.
-				Toolkit.getDefaultToolkit().beep();
-			}
-		}//End of get new value then update corresponding values
 		
-		public Dimension getPreferredSize()
-		{
-			return new Dimension(200,200);
-		}
-		
-		protected ConvertibleValue cValue;
+		protected ConvertibleValue cValue; 
 	 
-		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, String name)
+		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, String name, DistanceMultipliers m)
 		{
 			Dimension dim = new Dimension(100,25);
-			CTalkativeTextPane textPane = new CTalkativeTextPane(cValue, DistanceMultipliers.METERS);
+			CTalkativeTextPane textPane = new CTalkativeTextPane(cValue, m);
 			textPane.getDocument().putProperty("name", name);
 			//textPane.getDocument().addDocumentListener(this);
 			textPane.setPreferredSize(dim);
@@ -703,7 +546,7 @@ class HappyHackingConverter
 		public CPanel(CFrame frame)
 		{
 			super(new GridBagLayout());//call to super must be first statement in constructor
-			cValue = new ConvertibleValue();
+			cValue = new ConvertibleValue(); //The shared instance.
 			GridBagLayout gridbag = (GridBagLayout)getLayout();
 			
 			setBackground(white);
@@ -716,8 +559,9 @@ class HappyHackingConverter
 			c.ipadx = 1;
 			c.weightx = 1; 
 			c.weighty = 1;
-			CDocumentTemperatureFilter tempFilter = new CDocumentTemperatureFilter(cValue, DistanceMultipliers.METERS, frame);
-			newTextPane(c, gridbag, tempFilter, centegrade);
+			CDocumentTemperatureFilter tempFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS, frame);
+			System.out.println("HELOOOOOOOOOOOOOO");
+			newTextPane(c, gridbag, tempFilter, centegrade, DistanceMultipliers.METERS);
 			
 			c = new GridBagConstraints();
 			c.gridx = 0;
@@ -728,8 +572,9 @@ class HappyHackingConverter
 			c.weightx = 2; 
 			c.weighty = 2;
 			c.fill = GridBagConstraints.HORIZONTAL;
-			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS, frame);
-			newTextPane(c, gridbag, posFilter, litre);
+			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.KILOMETERS, frame);
+			System.out.println("THEEEEEEEEEEEEEEEEEERE");
+			newTextPane(c, gridbag, posFilter, litre, DistanceMultipliers.KILOMETERS);
 		}//constructor
 	 }//end of class CPanel
 	 
