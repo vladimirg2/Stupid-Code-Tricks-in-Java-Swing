@@ -182,6 +182,11 @@ class HappyHackingConverter
 		protected DistanceMultipliers multiplier;
 		protected CFrame topContainer;
 		
+		public DistanceMultipliers getConverter()
+		{
+		return multiplier;
+		}
+		
 		//This function inserts or replaces the user's input in a string buffer, to create the text which would be on screen if we allowed it.
 		//We declare to throw bad location due to doc.getText, but since the paramters are coming from the farmework, that should never happen.... in theory.
 		//If insert is true we insert, if false we replace. 
@@ -401,30 +406,18 @@ class HappyHackingConverter
 	 */
 	 class CTalkativeTextPane extends JTextPane 
 	 {
-		public CTalkativeTextPane(ConvertibleValue V, DistanceMultipliers M)
+		public CTalkativeTextPane(ConvertibleValue V, CDocumentTemperatureFilter F)
 		{
 		super();
 		value = V; //Shared value instance
-		multiplier = M; //Converter
+		setPreferredSize(new Dimension(100,25));
+		setBorder(new BevelBorder(BevelBorder.RAISED));
+		filter = F;
+		((AbstractDocument)getStyledDocument()).setDocumentFilter(filter);;
+		multiplier = filter.getConverter();
 		}
 		protected CDocumentTemperatureFilter filter;
 		
-		public void setDocumentFilter(CDocumentTemperatureFilter f)
-		{
-		filter = f;
-		StyledDocument styledDoc = getStyledDocument();
-			if (styledDoc instanceof AbstractDocument) 
-			{
-				AbstractDocument doc = (AbstractDocument)styledDoc;
-				doc.setDocumentFilter(filter);
-			} 
-			else 
-			{
-				System.err.println("Text pane's document isn't an AbstractDocument!");
-				System.exit(-1);
-			}
-		}
-
 		/*
 		Gets the displayed value, and uses the converter to convert the
 		shared value to units this instance is supposed to represent.
@@ -534,16 +527,9 @@ class HappyHackingConverter
 		
 		protected ConvertibleValue cValue;  //reference to shared instance.
 	 
-		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, String name, DistanceMultipliers m)
+		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, String label)
 		{
-			Dimension dim = new Dimension(100,25);
-			CTalkativeTextPane textPane = new CTalkativeTextPane(cValue, m);
-			textPane.getDocument().putProperty("name", name);
-			//textPane.getDocument().addDocumentListener(this);
-			textPane.setPreferredSize(dim);
-			BevelBorder border = new BevelBorder(BevelBorder.RAISED);
-			textPane.setBorder(border);
-			textPane.setDocumentFilter(filter);
+			CTalkativeTextPane textPane = new CTalkativeTextPane(cValue, filter);
 			gridbag.setConstraints(textPane, c);
 			add(textPane);
 		}
@@ -564,8 +550,7 @@ class HappyHackingConverter
 			c.weightx = 1; 
 			c.weighty = 1;
 			CDocumentTemperatureFilter tempFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS, frame);
-			System.out.println("HELOOOOOOOOOOOOOO");
-			newTextPane(c, gridbag, tempFilter, centegrade, DistanceMultipliers.METERS);
+			newTextPane(c, gridbag, tempFilter, centegrade);
 			
 			c = new GridBagConstraints();
 			c.gridx = 0;
@@ -577,8 +562,7 @@ class HappyHackingConverter
 			c.weighty = 2;
 			c.fill = GridBagConstraints.HORIZONTAL;
 			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.KILOMETERS, frame);
-			System.out.println("THEEEEEEEEEEEEEEEEEERE");
-			newTextPane(c, gridbag, posFilter, litre, DistanceMultipliers.KILOMETERS);
+			newTextPane(c, gridbag, posFilter, litre);
 		}//constructor
 	 }//end of class CPanel
 	 
