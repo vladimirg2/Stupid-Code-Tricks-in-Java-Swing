@@ -426,8 +426,8 @@ class HappyHackingConverter
 		}
 
 		/*
-		Gets the displayed value, and uses the converter to conver the
-		shared value to unit this instance is supposed to represent.
+		Gets the displayed value, and uses the converter to convert the
+		shared value to units this instance is supposed to represent.
 		If the displayed value and shared value are different,
 		then we turn off our document filter and update our value
 		to match the shared value. We re-enable to document filter afterwards.
@@ -454,6 +454,10 @@ class HappyHackingConverter
 				displayedValue = "";
 				//Beep?
 				}
+				if(displayedValue.isEmpty())
+				{
+				displayedValue = "0";
+				}
 				double displayedValueAsDouble = Double.parseDouble(displayedValue);
 				if(actualValue != displayedValueAsDouble)
 				{
@@ -479,7 +483,7 @@ class HappyHackingConverter
 			}			
 			catch (NumberFormatException e)
 			{
-			//Do nothing since we allow things like '-'.
+			System.out.println(e);
 			}
 						
         }
@@ -528,7 +532,7 @@ class HappyHackingConverter
 		private static final String mile = "Mile";
 		
 		
-		protected ConvertibleValue cValue; 
+		protected ConvertibleValue cValue;  //reference to shared instance.
 	 
 		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, String name, DistanceMultipliers m)
 		{
@@ -543,10 +547,10 @@ class HappyHackingConverter
 			gridbag.setConstraints(textPane, c);
 			add(textPane);
 		}
-		public CPanel(CFrame frame)
+		public CPanel(CFrame frame, ConvertibleValue inCValue)
 		{
 			super(new GridBagLayout());//call to super must be first statement in constructor
-			cValue = new ConvertibleValue(); //The shared instance.
+			cValue = inCValue;
 			GridBagLayout gridbag = (GridBagLayout)getLayout();
 			
 			setBackground(white);
@@ -600,8 +604,10 @@ class HappyHackingConverter
 		
 		CFrame f = new CFrame();
 		f.setBackground(white);
+		
+		ConvertibleValue distances = new ConvertibleValue();
 		 
-		JPanel a = new CPanel(f);
+		JPanel a = new CPanel(f, distances);
 		JPanel b = new JPanel();
 		
 		
