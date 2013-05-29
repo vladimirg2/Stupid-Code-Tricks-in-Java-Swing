@@ -517,22 +517,44 @@ class HappyHackingConverter
 		private static final String ounce = "Ounce";
 		private static final String kilogram = "Kilogram";
 		private static final String pound = "Pound";
-		private static final String centimeter = "Centimeter";
+		private static final String millimeter = "Millimeter(s)";
+		private static final String centimeter = "Centimeter(s)";
 		private static final String inch = "Inch";
-		private static final String meter = "Meter";
+		private static final String meter = "Meter(s)";
 		private static final String foot = "Foot";
-		private static final String kilometer = "Kilometer";
+		private static final String kilometer = "Kilometer(s)";
 		private static final String mile = "Mile";
 		
 		
 		protected ConvertibleValue cValue;  //reference to shared instance.
 	 
-		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, String label)
+		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, String name)
 		{
-			CTalkativeTextPane textPane = new CTalkativeTextPane(cValue, filter);
-			gridbag.setConstraints(textPane, c);
-			add(textPane);
+			JPanel panel = new JPanel();
+			panel.setBackground(white);
+			panel.setLayout(new FlowLayout(FlowLayout.LEADING));
+			panel.add(new CTalkativeTextPane(cValue, filter));
+			panel.add(new JLabel(name, JLabel.LEFT));
+			gridbag.setConstraints(panel, c);
+			add(panel);
+			panel = null;
 		}
+		
+		protected GridBagConstraints createContraints(int x, int y)
+		{
+			GridBagConstraints c = new GridBagConstraints();
+			c.gridx = x;
+			c.gridy = y;
+			c.gridwidth = 2;
+			c.gridheight = 1;
+			c.ipadx = 1;
+			c.weightx = 1; 
+			c.weighty = 1;
+			c.anchor = GridBagConstraints.LINE_START;
+			//c.insets = new Insets(0,1,0,0);
+			return c;
+		}
+	
 		public CPanel(CFrame frame, ConvertibleValue inCValue)
 		{
 			super(new GridBagLayout());//call to super must be first statement in constructor
@@ -541,28 +563,17 @@ class HappyHackingConverter
 			
 			setBackground(white);
 			
-			GridBagConstraints c = new GridBagConstraints();
-			c.gridx = 0;
-			c.gridy = 0;
-			c.gridwidth = 2;
-			c.gridheight = 2;
-			c.ipadx = 1;
-			c.weightx = 1; 
-			c.weighty = 1;
-			CDocumentTemperatureFilter tempFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS, frame);
-			newTextPane(c, gridbag, tempFilter, centegrade);
+			int x = 0;
+			int y = 0;
 			
-			c = new GridBagConstraints();
-			c.gridx = 0;
-			c.gridy = 2;
-			c.gridwidth = 2;
-			c.gridheight = 2;
-			c.ipadx = 1;
-			c.weightx = 2; 
-			c.weighty = 2;
-			c.fill = GridBagConstraints.HORIZONTAL;
-			CDocumentPositiveNumberFilter posFilter = new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.KILOMETERS, frame);
-			newTextPane(c, gridbag, posFilter, litre);
+			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.MILIMETERS, frame), millimeter);
+			
+			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.CENTIMETERS, frame), centimeter);
+			
+			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS, frame), meter);
+			
+			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.KILOMETERS, frame), kilometer);
+			
 		}//constructor
 	 }//end of class CPanel
 	 
