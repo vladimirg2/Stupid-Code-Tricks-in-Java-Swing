@@ -261,6 +261,10 @@ class HappyHackingConverter
 		{
 			Document doc = fb.getDocument();
 			String text = doc.getText(0, doc.getLength());
+			if(text.isEmpty())
+			{
+				text = "0";
+			}
 			
 			if(updateValue == true)
 				{
@@ -496,7 +500,7 @@ class HappyHackingConverter
 	/*
 	 * This inner class we will use will be a slightly customized JPanel.
 	 */
-	 class CPanel extends JPanel 
+	 abstract class CPanel extends JPanel 
 	 {
 		//Names for each text pane:
 		/*
@@ -509,26 +513,27 @@ class HappyHackingConverter
 			an alternative would be to put the initalization of the
 			strings in the constructor beause they are not needed before that.
 		*/
-		private static final String centegrade = "Centegrade";
-		private static final String fahrenheit = "Fahrenheit";
-		private static final String litre = "Liter";
-		private static final String galon = "Galon";
-		private static final String gram = "Gram";
-		private static final String ounce = "Ounce";
-		private static final String kilogram = "Kilogram";
-		private static final String pound = "Pound";
-		private static final String millimeter = "Millimeter(s)";
-		private static final String centimeter = "Centimeter(s)";
-		private static final String inch = "Inch";
-		private static final String meter = "Meter(s)";
-		private static final String foot = "Foot";
-		private static final String kilometer = "Kilometer(s)";
-		private static final String mile = "Mile";
+		protected static final String centegrade = "Centegrade";
+		protected static final String fahrenheit = "Fahrenheit";
+		protected static final String litre = "Liter";
+		protected static final String galon = "Galon";
+		protected static final String gram = "Gram";
+		protected static final String ounce = "Ounce";
+		protected static final String kilogram = "Kilogram";
+		protected static final String pound = "Pound";
+		protected static final String millimeter = "Millimeter(s)";
+		protected static final String centimeter = "Centimeter(s)";
+		protected static final String inch = "Inch(es)";
+		protected static final String meter = "Meter(s)";
+		protected static final String foot = "ft."; //FIXME: Add doucment listener to use Foot and Feet depending on the number.
+		protected static final String yard = "Yard(s)";
+		protected static final String kilometer = "Kilometer(s)";
+		protected static final String mile = "Mile(s)";
 		
-		
+		protected CFrame frame;
 		protected ConvertibleValue cValue;  //reference to shared instance.
 	 
-		private void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, String name)
+		protected void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, String name)
 		{
 			JPanel panel = new JPanel();
 			panel.setBackground(white);
@@ -554,15 +559,34 @@ class HappyHackingConverter
 			//c.insets = new Insets(0,1,0,0);
 			return c;
 		}
+		
+		
 	
-		public CPanel(CFrame frame, ConvertibleValue inCValue)
+		public CPanel(CFrame F, ConvertibleValue CV)
 		{
 			super(new GridBagLayout());//call to super must be first statement in constructor
-			cValue = inCValue;
-			GridBagLayout gridbag = (GridBagLayout)getLayout();
+			frame = F;
+			cValue = CV;
+			
 			
 			setBackground(white);
 			
+			layoutConverters();
+			
+		}//constructor
+		public abstract void layoutConverters();
+	 }//end of class CPanel
+	 
+	 class MetricDistancesPanel extends CPanel
+	 {
+		public MetricDistancesPanel(CFrame F, ConvertibleValue CV)
+		{
+			super(F, CV);
+		}
+	 
+		public void layoutConverters()
+		{
+			GridBagLayout gridbag = (GridBagLayout)getLayout();
 			int x = 0;
 			int y = 0;
 			
@@ -573,9 +597,33 @@ class HappyHackingConverter
 			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS, frame), meter);
 			
 			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.KILOMETERS, frame), kilometer);
+		}
+	 
+	 }//end of class DistancesPanel
+	 
+	 class ImperialDistancesPanel extends CPanel
+	 {
+		public ImperialDistancesPanel(CFrame F, ConvertibleValue CV)
+		{
+			super(F, CV);
+		}
 			
-		}//constructor
-	 }//end of class CPanel
+		public void layoutConverters()
+		{
+			GridBagLayout gridbag = (GridBagLayout)getLayout();
+			int x = 0;
+			int y = 0;
+			
+			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.INCHES, frame), inch);
+			
+			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.FEET, frame), foot);
+			
+			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.YARDS, frame), yard);
+			
+			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.MILES, frame), mile);
+		}
+	 
+	 }//End of ImperialDistancesPanel
 	 
 	/**
      * We are gonig to put our cutomized panels in a custom split pane. 
@@ -602,8 +650,8 @@ class HappyHackingConverter
 		
 		ConvertibleValue distances = new ConvertibleValue();
 		 
-		JPanel a = new CPanel(f, distances);
-		JPanel b = new JPanel();
+		JPanel a = new MetricDistancesPanel(f, distances);
+		JPanel b = new ImperialDistancesPanel(f, distances);
 		
 		
 		CSplit split = new CSplit(JSplitPane.HORIZONTAL_SPLIT, true, a, b);
