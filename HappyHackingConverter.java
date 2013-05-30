@@ -68,10 +68,18 @@ class HappyHackingConverter
 	 protected double value;
 	 }
 	 
+	
+	 interface Converter
+	 {
+		public double timesValue(double value);
+		public double divValue(double value);
+		public double getFactor();
+	 }
+	 
 	 /*
 	 An enum to handle conversion between distance units.
 	 */
-	 enum DistanceMultipliers
+	 enum DistanceMultipliers implements Converter
 	 {
 		 METERS(1),
 		 MILIMETERS(1000),
@@ -94,9 +102,48 @@ class HappyHackingConverter
 		 {
 		 return (value / factor);
 		 }
-		 public double getValue()
+		 public double getFactor()
 		 {
 		 return factor;
+		 }
+	 }
+	 
+	 enum TemperatureScales
+	 {
+		CENTIGRADE, FAHRENHEIT
+	 }
+	 
+	 class TemperatureFactors implements Converter
+	 {
+		TemperatureScales scale;
+		public TemperatureFactors(TemperatureScales s)
+		{
+			scale = s;
+		}
+		public double timesValue(double value)
+		{
+			switch(scale)
+			{
+				case CENTIGRADE: return value;
+				case FAHRENHEIT: return ((value * (9.0/5.0)) + 32.0);
+				default: return value;
+			}
+		}
+		
+		public double divValue(double value)
+		 {
+			switch(scale)
+			{
+				case CENTIGRADE: return value;
+				case FAHRENHEIT: return ((value - 32.0) * (5.0/9.0));
+				default: return value;
+			}
+		 }
+		 
+		 public double getFactor()
+		 {
+			//FIXME: We should probably assert here.
+			return 0; //Not an actual multiplilcative factor.
 		 }
 	 }
 	 
@@ -169,7 +216,7 @@ class HappyHackingConverter
 	 */
 	 class CDocumentTemperatureFilter extends DocumentFilter
 	 {		
-		public CDocumentTemperatureFilter(ConvertibleValue cv, DistanceMultipliers m, CFrame frame)
+		public CDocumentTemperatureFilter(ConvertibleValue cv, Converter m, CFrame frame)
 		{
 			super();
 			updateValue = true;
@@ -179,10 +226,10 @@ class HappyHackingConverter
 			System.out.println("Constructed CDocumentTemperatureFilter");
 		}
 		protected ConvertibleValue cValue;
-		protected DistanceMultipliers multiplier;
+		protected Converter multiplier;
 		protected CFrame topContainer;
 		
-		public DistanceMultipliers getConverter()
+		public Converter getConverter()
 		{
 		return multiplier;
 		}
@@ -342,10 +389,10 @@ class HappyHackingConverter
 	 */
 	 class CDocumentPositiveNumberFilter extends CDocumentTemperatureFilter
 	 {
-		public CDocumentPositiveNumberFilter(ConvertibleValue cv, DistanceMultipliers m, CFrame frame)
+		public CDocumentPositiveNumberFilter(ConvertibleValue cv, Converter m, CFrame frame)
 		{
 			super(cv, m, frame);
-			System.out.printf("Constructed CDocumentPositiveNumberFilter with multiplier %f \n", m.getValue());
+			System.out.printf("Constructed CDocumentPositiveNumberFilter with multiplier %f \n", m.getFactor());
 		}
 		
 		private boolean isValidPostiveNumber(boolean insert, FilterBypass fb, int offs,
@@ -436,7 +483,7 @@ class HappyHackingConverter
 			try
 			{
 				StyledDocument doc = getStyledDocument();
-				System.out.printf("The fucking multiplier is: %f \n", multiplier.getValue());
+				System.out.printf("The fucking multiplier is: %f \n", multiplier.getFactor());
 				double actualValue = (multiplier.timesValue(value.getValue()));
 				String actualValueAsString = Double.toString(actualValue);
 				
@@ -491,7 +538,7 @@ class HappyHackingConverter
             super.repaint(tm, 0, 0, getWidth(), getHeight());
         }
 		
-		protected DistanceMultipliers multiplier;
+		protected Converter multiplier;
 		protected ConvertibleValue value;
 		
 
@@ -571,7 +618,7 @@ class HappyHackingConverter
 			
 			setBackground(white);
 			
-			layoutConverters();
+			
 			
 		}//constructor
 		public abstract void layoutConverters();
@@ -582,6 +629,7 @@ class HappyHackingConverter
 		public MetricDistancesPanel(CFrame F, ConvertibleValue CV)
 		{
 			super(F, CV);
+			layoutConverters();
 		}
 	 
 		public void layoutConverters()
@@ -606,6 +654,7 @@ class HappyHackingConverter
 		public ImperialDistancesPanel(CFrame F, ConvertibleValue CV)
 		{
 			super(F, CV);
+			layoutConverters();
 		}
 			
 		public void layoutConverters()
@@ -624,6 +673,29 @@ class HappyHackingConverter
 		}
 	 
 	 }//End of ImperialDistancesPanel
+	 
+	 class TemperaturePanel extends CPanel
+	 {
+		protected TemperatureScales scale;
+		public TemperaturePanel(CFrame F, ConvertibleValue CV, TemperatureScales s)
+		{
+			super(F, CV);
+			scale = s;
+			layoutConverters();
+		}
+		
+		public void layoutConverters()
+		{
+			GridBagLayout gridbag = (GridBagLayout)getLayout();
+			String scaleString = centegrade;
+			if(scale == TemperatureScales.FAHRENHEIT)
+			{
+				scaleString = fahrenheit;
+			}
+			newTextPane(createContraints(0,0), gridbag, new CDocumentTemperatureFilter(cValue, new TemperatureFactors(scale), frame), scaleString);
+			
+		}
+	 }
 	 
 	/**
      * We are gonig to put our cutomized panels in a custom split pane. 
@@ -648,13 +720,53 @@ class HappyHackingConverter
 		CFrame f = new CFrame();
 		f.setBackground(white);
 		
+		ConvertibleValue temperatures = new ConvertibleValue();
 		ConvertibleValue distances = new ConvertibleValue();
-		 
-		JPanel a = new MetricDistancesPanel(f, distances);
-		JPanel b = new ImperialDistancesPanel(f, distances);
+		
+		GridBagLayout leftSideLayout = new GridBagLayout();
+		JPanel leftSide = new JPanel(leftSideLayout);
+		leftSide.setBackground(white);
+		
+		GridBagConstraints metricTemperatureConstraints = new GridBagConstraints();
+		metricTemperatureConstraints.gridx = 0;
+		metricTemperatureConstraints.gridy = 0;
+		metricTemperatureConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
+		JPanel metricTemperaturePanel = new TemperaturePanel(f, temperatures, TemperatureScales.CENTIGRADE);
+		leftSideLayout.setConstraints(metricTemperaturePanel, metricTemperatureConstraints);
+		leftSide.add(metricTemperaturePanel);
+		
+		GridBagConstraints metricDistancesPanelConstraints = new GridBagConstraints();
+		metricDistancesPanelConstraints.gridx = 0;
+		metricDistancesPanelConstraints.gridy = 1;
+		metricDistancesPanelConstraints.anchor = GridBagConstraints.LINE_START;
+		JPanel metricDistancesPanel = new MetricDistancesPanel(f, distances);
+		leftSideLayout.setConstraints(metricDistancesPanel, metricDistancesPanelConstraints);
+		leftSide.add(metricDistancesPanel);
+		
+		GridBagLayout rightSideLayout = new GridBagLayout();
+		JPanel rightSide = new JPanel(rightSideLayout);
+		rightSide.setBackground(white);
+		
+		GridBagConstraints fahrenheitConstraints = new GridBagConstraints();
+		fahrenheitConstraints.gridx = 0;
+		fahrenheitConstraints.gridy = 0;
+		fahrenheitConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
+		JPanel fahrenheitTemperaturePanel = new TemperaturePanel(f, temperatures, TemperatureScales.FAHRENHEIT);
+		rightSideLayout.setConstraints(fahrenheitTemperaturePanel, fahrenheitConstraints);
+		rightSide.add(fahrenheitTemperaturePanel);
 		
 		
-		CSplit split = new CSplit(JSplitPane.HORIZONTAL_SPLIT, true, a, b);
+		GridBagConstraints imperialDistancesPanelConstraints = new GridBagConstraints();
+		imperialDistancesPanelConstraints.gridx = 0;
+		imperialDistancesPanelConstraints.gridy = 1;
+		imperialDistancesPanelConstraints.anchor = GridBagConstraints.LINE_START;
+		JPanel imperialDistancesPanel = new ImperialDistancesPanel(f, distances);
+		rightSideLayout.setConstraints(imperialDistancesPanel, imperialDistancesPanelConstraints);
+		rightSide.add(imperialDistancesPanel);
+		
+		
+		
+		CSplit split = new CSplit(JSplitPane.HORIZONTAL_SPLIT, true, leftSide, rightSide);
 		Container contentPane = f.getContentPane();
 		contentPane.add(split);
 		split.setDividerLocation(0.5);
