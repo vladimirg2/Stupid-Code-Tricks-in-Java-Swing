@@ -71,8 +71,8 @@ class HappyHackingConverter
 	
 	 interface Converter
 	 {
-		public double timesValue(double value);
-		public double divValue(double value);
+		public double getDisplayValue(double value);
+		public double getValueToBeSet(double value);
 		public double getFactor();
 	 }
 	 
@@ -94,11 +94,11 @@ class HappyHackingConverter
 		 {
 			factor = f;
 		 }
-		 public double timesValue(double value)
+		 public double getDisplayValue(double value)
 		 {
 		 return (value * factor);
 		 }
-		 public double divValue(double value)
+		 public double getValueToBeSet(double value)
 		 {
 		 return (value / factor);
 		 }
@@ -120,7 +120,7 @@ class HappyHackingConverter
 		{
 			scale = s;
 		}
-		public double timesValue(double value)
+		public double getDisplayValue(double value)
 		{
 			switch(scale)
 			{
@@ -130,7 +130,7 @@ class HappyHackingConverter
 			}
 		}
 		
-		public double divValue(double value)
+		public double getValueToBeSet(double value)
 		 {
 			switch(scale)
 			{
@@ -142,7 +142,7 @@ class HappyHackingConverter
 		 
 		 public double getFactor()
 		 {
-			//FIXME: We should probably assert here.
+			//FIXME: We should probably throw here.
 			return 0; //Not an actual multiplilcative factor.
 		 }
 	 }
@@ -319,7 +319,7 @@ class HappyHackingConverter
 					{
 					System.out.printf("doValueUpdate text coming is is: %s \n", text);
 					Double value = new Double(text);
-					double newValue = multiplier.divValue(value.doubleValue());
+					double newValue = multiplier.getValueToBeSet(value.doubleValue());
 					cValue.setValue(newValue);
 					System.out.printf("doValueUpdate new string value = %s \n", Double.toString(newValue));
 					}
@@ -484,7 +484,7 @@ class HappyHackingConverter
 			{
 				StyledDocument doc = getStyledDocument();
 				System.out.printf("The fucking multiplier is: %f \n", multiplier.getFactor());
-				double actualValue = (multiplier.timesValue(value.getValue()));
+				double actualValue = (multiplier.getDisplayValue(value.getValue()));
 				String actualValueAsString = Double.toString(actualValue);
 				
 				String displayedValue;
@@ -715,7 +715,7 @@ class HappyHackingConverter
 	{
 		//Make sure things compile.
 		System.out.println("Hello World!");
-		System.out.println(DistanceMultipliers.KILOMETERS.timesValue(1));
+		System.out.println(DistanceMultipliers.KILOMETERS.getDisplayValue(1));
 		
 		CFrame f = new CFrame();
 		f.setBackground(white);
