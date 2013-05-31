@@ -75,6 +75,7 @@ class HappyHackingConverter
 		public double getValueToBeSet(double value);
 		public double getFactor();
 	 }
+
 	 
 	 /*
 	 An enum to handle conversion between distance units.
@@ -106,6 +107,51 @@ class HappyHackingConverter
 		 {
 		 return factor;
 		 }
+	 }
+	 
+	 enum WightMultipliers implements Converter
+	 {
+		KILOGRAM(1),
+		GRAM(1000),
+		LITER(1), //Water, option to add gasoline later.
+		MILLILITER(1000),
+		METRIC_TON(0.001), //It's almost as if the metric units could share the factors.
+		OUNZE(35.274),
+		TORY_OUNCE(32.1507466),
+		POUND(2.20462),
+		GALON(0.264172),
+		LONG_TON(0.000984207), //United Kingdom
+		SHORT_TON(0.00110231); //United States
+		private final double factor;
+		private WightMultipliers(double f)
+		{
+			factor = f;
+		}
+		/*
+		Since all Java enums implicitly extend java.lang.Enum,
+		and thus cannont extend anything else. 
+		There is some code duplication with the distance
+		enum here. An inner class shared between
+		the two enums would have to be static
+		since nested enum types are implicitly static,
+		and since inner classes can't be static,
+		we are out of options.
+		*/
+		public double getDisplayValue(double value)
+		 {
+		 return (value * factor);
+		 }
+		 public double getValueToBeSet(double value)
+		 {
+		 return (value / factor);
+		 }
+		 public double getFactor()
+		 {
+		 return factor;
+		 }
+		
+		
+		
 	 }
 	 
 	 enum TemperatureScales
