@@ -109,9 +109,10 @@ class HappyHackingConverter
 		 }
 	 }
 	 
-	 enum WightMultipliers implements Converter
+	 enum WeightMultipliers implements Converter
 	 {
 		KILOGRAM(1),
+		MILLIGRAM(1000000),
 		GRAM(1000),
 		LITER(1), //Water, option to add gasoline later.
 		MILLILITER(1000),
@@ -123,7 +124,7 @@ class HappyHackingConverter
 		LONG_TON(0.000984207), //United Kingdom
 		SHORT_TON(0.00110231); //United States
 		private final double factor;
-		private WightMultipliers(double f)
+		private WeightMultipliers(double f)
 		{
 			factor = f;
 		}
@@ -608,11 +609,14 @@ class HappyHackingConverter
 		*/
 		protected static final String centegrade = "Centegrade";
 		protected static final String fahrenheit = "Fahrenheit";
-		protected static final String litre = "Liter";
+		protected static final String liter = "Liter (Water)";
+		protected static final String milliliter = "Milliliter";
 		protected static final String galon = "Galon";
 		protected static final String gram = "Gram";
+		protected static final String milligram = "Milligram";
 		protected static final String ounce = "Ounce";
 		protected static final String kilogram = "Kilogram";
+		protected static final String ton = "Ton";
 		protected static final String pound = "Pound";
 		protected static final String millimeter = "Millimeter(s)";
 		protected static final String centimeter = "Centimeter(s)";
@@ -638,7 +642,7 @@ class HappyHackingConverter
 			panel = null;
 		}
 		
-		protected GridBagConstraints createContraints(int x, int y)
+		protected GridBagConstraints createConstraints(int x, int y)
 		{
 			GridBagConstraints c = new GridBagConstraints();
 			c.gridx = x;
@@ -646,9 +650,10 @@ class HappyHackingConverter
 			c.gridwidth = 2;
 			c.gridheight = 1;
 			c.ipadx = 1;
-			c.weightx = 1; 
-			c.weighty = 1;
-			c.anchor = GridBagConstraints.LINE_START;
+			c.weightx = 0.5; 
+			c.weighty = 0.5;
+			c.fill = GridBagConstraints.BOTH;
+			c.anchor = GridBagConstraints.CENTER;
 			//c.insets = new Insets(0,1,0,0);
 			return c;
 		}
@@ -658,6 +663,7 @@ class HappyHackingConverter
 		public CPanel(CFrame F, ConvertibleValue CV)
 		{
 			super(new GridBagLayout());//call to super must be first statement in constructor
+			setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.blue));
 			frame = F;
 			cValue = CV;
 			
@@ -676,6 +682,7 @@ class HappyHackingConverter
 		{
 			super(F, CV);
 			layoutConverters();
+			//setBackground(new Color(0,0,0));
 		}
 	 
 		public void layoutConverters()
@@ -684,13 +691,13 @@ class HappyHackingConverter
 			int x = 0;
 			int y = 0;
 			
-			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.MILIMETERS, frame), millimeter);
+			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.MILIMETERS, frame), millimeter);
 			
-			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.CENTIMETERS, frame), centimeter);
+			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.CENTIMETERS, frame), centimeter);
 			
-			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS, frame), meter);
+			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS, frame), meter);
 			
-			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.KILOMETERS, frame), kilometer);
+			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.KILOMETERS, frame), kilometer);
 		}
 	 
 	 }//end of class DistancesPanel
@@ -709,13 +716,13 @@ class HappyHackingConverter
 			int x = 0;
 			int y = 0;
 			
-			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.INCHES, frame), inch);
+			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.INCHES, frame), inch);
 			
-			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.FEET, frame), foot);
+			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.FEET, frame), foot);
 			
-			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.YARDS, frame), yard);
+			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.YARDS, frame), yard);
 			
-			newTextPane(createContraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.MILES, frame), mile);
+			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.MILES, frame), mile);
 		}
 	 
 	 }//End of ImperialDistancesPanel
@@ -738,8 +745,30 @@ class HappyHackingConverter
 			{
 				scaleString = fahrenheit;
 			}
-			newTextPane(createContraints(0,0), gridbag, new CDocumentTemperatureFilter(cValue, new TemperatureFactors(scale), frame), scaleString);
+			newTextPane(createConstraints(0,0), gridbag, new CDocumentTemperatureFilter(cValue, new TemperatureFactors(scale), frame), scaleString);
 			
+		}
+	 }
+	 
+	 class MetricWeightsPanel extends CPanel
+	 {
+		public MetricWeightsPanel(CFrame F, ConvertibleValue CV)
+		{
+			super(F, CV);
+			layoutConverters();
+		}
+		public void layoutConverters()
+		{
+			GridBagLayout gridbag = (GridBagLayout)getLayout();
+			int x = 0;
+			int y = 0;
+			
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.MILLIGRAM, frame), milligram);
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.GRAM, frame), gram);
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.KILOGRAM, frame), kilogram);
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.METRIC_TON, frame), ton);
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.LITER, frame), liter);
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.MILLILITER, frame), milliliter);
 		}
 	 }
 	 
@@ -763,11 +792,12 @@ class HappyHackingConverter
 		System.out.println("Hello World!");
 		System.out.println(DistanceMultipliers.KILOMETERS.getDisplayValue(1));
 		
-		CFrame f = new CFrame();
-		f.setBackground(white);
+		CFrame frame = new CFrame();
+		frame.setBackground(white);
 		
 		ConvertibleValue temperatures = new ConvertibleValue();
 		ConvertibleValue distances = new ConvertibleValue();
+		ConvertibleValue weights = new ConvertibleValue();
 		
 		GridBagLayout leftSideLayout = new GridBagLayout();
 		JPanel leftSide = new JPanel(leftSideLayout);
@@ -776,16 +806,21 @@ class HappyHackingConverter
 		GridBagConstraints metricTemperatureConstraints = new GridBagConstraints();
 		metricTemperatureConstraints.gridx = 0;
 		metricTemperatureConstraints.gridy = 0;
-		metricTemperatureConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
-		JPanel metricTemperaturePanel = new TemperaturePanel(f, temperatures, TemperatureScales.CENTIGRADE);
+		metricTemperatureConstraints.weighty = 0.5;
+		metricTemperatureConstraints.weightx = 1;
+		//metricTemperatureConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
+		JPanel metricTemperaturePanel = new TemperaturePanel(frame, temperatures, TemperatureScales.CENTIGRADE);
 		leftSideLayout.setConstraints(metricTemperaturePanel, metricTemperatureConstraints);
 		leftSide.add(metricTemperaturePanel);
 		
 		GridBagConstraints metricDistancesPanelConstraints = new GridBagConstraints();
 		metricDistancesPanelConstraints.gridx = 0;
 		metricDistancesPanelConstraints.gridy = 1;
-		metricDistancesPanelConstraints.anchor = GridBagConstraints.LINE_START;
-		JPanel metricDistancesPanel = new MetricDistancesPanel(f, distances);
+		metricDistancesPanelConstraints.weighty = 1;
+		metricDistancesPanelConstraints.weightx = 1;
+		metricDistancesPanelConstraints.fill = GridBagConstraints.VERTICAL;
+		//metricDistancesPanelConstraints.anchor = GridBagConstraints.LINE_START;
+		JPanel metricDistancesPanel = new MetricDistancesPanel(frame, distances);
 		leftSideLayout.setConstraints(metricDistancesPanel, metricDistancesPanelConstraints);
 		leftSide.add(metricDistancesPanel);
 		
@@ -796,8 +831,10 @@ class HappyHackingConverter
 		GridBagConstraints fahrenheitConstraints = new GridBagConstraints();
 		fahrenheitConstraints.gridx = 0;
 		fahrenheitConstraints.gridy = 0;
-		fahrenheitConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
-		JPanel fahrenheitTemperaturePanel = new TemperaturePanel(f, temperatures, TemperatureScales.FAHRENHEIT);
+		fahrenheitConstraints.weighty = 0.5;
+		fahrenheitConstraints.weightx = 1;
+		//fahrenheitConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
+		JPanel fahrenheitTemperaturePanel = new TemperaturePanel(frame, temperatures, TemperatureScales.FAHRENHEIT);
 		rightSideLayout.setConstraints(fahrenheitTemperaturePanel, fahrenheitConstraints);
 		rightSide.add(fahrenheitTemperaturePanel);
 		
@@ -805,20 +842,33 @@ class HappyHackingConverter
 		GridBagConstraints imperialDistancesPanelConstraints = new GridBagConstraints();
 		imperialDistancesPanelConstraints.gridx = 0;
 		imperialDistancesPanelConstraints.gridy = 1;
-		imperialDistancesPanelConstraints.anchor = GridBagConstraints.LINE_START;
-		JPanel imperialDistancesPanel = new ImperialDistancesPanel(f, distances);
+		imperialDistancesPanelConstraints.weighty = 0.5;
+		imperialDistancesPanelConstraints.weightx = 1;
+		imperialDistancesPanelConstraints.fill = GridBagConstraints.VERTICAL;
+		//imperialDistancesPanelConstraints.anchor = GridBagConstraints.LINE_START;
+		JPanel imperialDistancesPanel = new ImperialDistancesPanel(frame, distances);
 		rightSideLayout.setConstraints(imperialDistancesPanel, imperialDistancesPanelConstraints);
 		rightSide.add(imperialDistancesPanel);
+		
+		GridBagConstraints metricWeightsConstraints = new GridBagConstraints();
+		metricWeightsConstraints.gridx = 0;
+		metricWeightsConstraints.gridy = 2;
+		metricWeightsConstraints.weighty = 0.5;
+		metricWeightsConstraints.weightx = 1;
+		//metricWeightsConstraints.anchor = GridBagConstraints.LAST_LINE_START;
+		MetricWeightsPanel metricWeightsPanel = new MetricWeightsPanel(frame, weights);
+		leftSideLayout.setConstraints(metricWeightsPanel, metricWeightsConstraints);
+		leftSide.add(metricWeightsPanel);
 		
 		
 		
 		CSplit split = new CSplit(JSplitPane.HORIZONTAL_SPLIT, true, leftSide, rightSide);
-		Container contentPane = f.getContentPane();
+		Container contentPane = frame.getContentPane();
 		contentPane.add(split);
 		split.setDividerLocation(0.5);
-		f.validate();
-		f.pack();
-		f.setSize(300,300);
+		frame.validate();
+		frame.pack();
+		frame.setSize(300,300);
 	}//end of HappyHackingConverter constructor
 
     /**
