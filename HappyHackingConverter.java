@@ -17,6 +17,7 @@ import java.lang.StringBuffer;
 import javax.swing.border.BevelBorder;
 import java.awt.Dimension;
 import javax.swing.event.*;
+import java.text.DecimalFormat;
 
 
 /**
@@ -119,8 +120,9 @@ class HappyHackingConverter
 		METRIC_TON(0.001), //It's almost as if the metric units could share the factors.
 		OUNZE(35.274),
 		TORY_OUNCE(32.1507466),
-		POUND(2.20462),
-		GALON(0.264172),
+		POUND(2.20462262185),
+		UK_GALON(0.219969),
+		US_GALON(0.264172),
 		LONG_TON(0.000984207), //United Kingdom
 		SHORT_TON(0.00110231); //United States
 		private final double factor;
@@ -132,11 +134,10 @@ class HappyHackingConverter
 		Since all Java enums implicitly extend java.lang.Enum,
 		and thus cannont extend anything else. 
 		There is some code duplication with the distance
-		enum here. An inner class shared between
-		the two enums would have to be static
-		since nested enum types are implicitly static,
-		and since inner classes can't be static,
-		we are out of options.
+		enum here. Each enum could get an intace of a class which
+		implements the Converter API and takes
+		the factor in its constructor, but then
+		all the calls to that instance would be duplicated. 
 		*/
 		public double getDisplayValue(double value)
 		 {
@@ -513,8 +514,10 @@ class HappyHackingConverter
 		filter = F;
 		((AbstractDocument)getStyledDocument()).setDocumentFilter(filter);;
 		multiplier = filter.getConverter();
+		df = new DecimalFormat("#.##");
 		}
 		protected CDocumentTemperatureFilter filter;
+		protected DecimalFormat df;
 		
 		/*
 		Gets the displayed value, and uses the converter to convert the
@@ -532,7 +535,7 @@ class HappyHackingConverter
 				StyledDocument doc = getStyledDocument();
 				System.out.printf("The fucking multiplier is: %f \n", multiplier.getFactor());
 				double actualValue = (multiplier.getDisplayValue(value.getValue()));
-				String actualValueAsString = Double.toString(actualValue);
+				String actualValueAsString = df.format(actualValue);//Double.toString(actualValue);
 				
 				String displayedValue;
 				try
@@ -550,7 +553,7 @@ class HappyHackingConverter
 				displayedValue = "0";
 				}
 				double displayedValueAsDouble = Double.parseDouble(displayedValue);
-				if(actualValue != displayedValueAsDouble)
+				if(!actualValueAsString.equals(displayedValue))
 				{
 				System.out.println("Repaint required");
 					try 
@@ -614,10 +617,9 @@ class HappyHackingConverter
 		protected static final String galon = "Galon";
 		protected static final String gram = "Gram";
 		protected static final String milligram = "Milligram";
-		protected static final String ounce = "Ounce";
 		protected static final String kilogram = "Kilogram";
-		protected static final String ton = "Ton";
-		protected static final String pound = "Pound";
+		protected static final String ton = "Tonne";
+		
 		protected static final String millimeter = "Millimeter(s)";
 		protected static final String centimeter = "Centimeter(s)";
 		protected static final String inch = "Inch(es)";
@@ -772,6 +774,49 @@ class HappyHackingConverter
 		}
 	 }
 	 
+	 
+	class ImperialWeightsPanel extends CPanel
+	{
+		//The labels must match the enum delcaration order.
+		protected final String[] labels = {"Ounce", "Troy ounce", "Pound", "Imperial gallon (UK)", "US gallon", "Long ton (UK)", "Short ton (US)", "who", "what", "where"};
+		public ImperialWeightsPanel(CFrame F, ConvertibleValue CV)
+		{
+			super(F, CV);
+			layoutConverters();
+		}
+		public void layoutConverters()
+		{
+			GridBagLayout gridbag = (GridBagLayout)getLayout();
+			int x = 0;
+			int y = 0;
+			
+			int ignore_metric = 0;
+			for(WeightMultipliers wm : WeightMultipliers.values())
+			{
+				ignore_metric++;
+				/*
+				values returns all enum values in order of declartion but we 
+				want to ingore the first 6 (metric) values.
+				*/
+				if(ignore_metric > 6)
+				{
+					newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, wm, frame), labels[ignore_metric-7]);
+				}
+				
+			}
+			//Is there a cleaner way to iterate over a chunk of what values() returns?
+			/*newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.OUNZE, frame), labels[0]);
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.TORY_OUNCE, frame), labels[1]);
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.POUND, frame), labels[2]);
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.UK_GALON, frame), labels[3]);
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.US_GALON, frame), labels[4]);
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.LONG_TON, frame), labels[5]);
+			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.SHORT_TON, frame), labels[6]); */
+			
+		}
+	}
+	
+	 
 	/**
      * We are gonig to put our cutomized panels in a custom split pane. 
      */
@@ -806,7 +851,7 @@ class HappyHackingConverter
 		GridBagConstraints metricTemperatureConstraints = new GridBagConstraints();
 		metricTemperatureConstraints.gridx = 0;
 		metricTemperatureConstraints.gridy = 0;
-		metricTemperatureConstraints.weighty = 0.5;
+		metricTemperatureConstraints.weighty = 0.3;
 		metricTemperatureConstraints.weightx = 1;
 		//metricTemperatureConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
 		JPanel metricTemperaturePanel = new TemperaturePanel(frame, temperatures, TemperatureScales.CENTIGRADE);
@@ -816,7 +861,7 @@ class HappyHackingConverter
 		GridBagConstraints metricDistancesPanelConstraints = new GridBagConstraints();
 		metricDistancesPanelConstraints.gridx = 0;
 		metricDistancesPanelConstraints.gridy = 1;
-		metricDistancesPanelConstraints.weighty = 1;
+		metricDistancesPanelConstraints.weighty = 0.3;
 		metricDistancesPanelConstraints.weightx = 1;
 		metricDistancesPanelConstraints.fill = GridBagConstraints.VERTICAL;
 		//metricDistancesPanelConstraints.anchor = GridBagConstraints.LINE_START;
@@ -831,7 +876,7 @@ class HappyHackingConverter
 		GridBagConstraints fahrenheitConstraints = new GridBagConstraints();
 		fahrenheitConstraints.gridx = 0;
 		fahrenheitConstraints.gridy = 0;
-		fahrenheitConstraints.weighty = 0.5;
+		fahrenheitConstraints.weighty = 0.3;
 		fahrenheitConstraints.weightx = 1;
 		//fahrenheitConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
 		JPanel fahrenheitTemperaturePanel = new TemperaturePanel(frame, temperatures, TemperatureScales.FAHRENHEIT);
@@ -842,7 +887,7 @@ class HappyHackingConverter
 		GridBagConstraints imperialDistancesPanelConstraints = new GridBagConstraints();
 		imperialDistancesPanelConstraints.gridx = 0;
 		imperialDistancesPanelConstraints.gridy = 1;
-		imperialDistancesPanelConstraints.weighty = 0.5;
+		imperialDistancesPanelConstraints.weighty = 0.3;
 		imperialDistancesPanelConstraints.weightx = 1;
 		imperialDistancesPanelConstraints.fill = GridBagConstraints.VERTICAL;
 		//imperialDistancesPanelConstraints.anchor = GridBagConstraints.LINE_START;
@@ -853,12 +898,21 @@ class HappyHackingConverter
 		GridBagConstraints metricWeightsConstraints = new GridBagConstraints();
 		metricWeightsConstraints.gridx = 0;
 		metricWeightsConstraints.gridy = 2;
-		metricWeightsConstraints.weighty = 0.5;
+		metricWeightsConstraints.weighty = 0.3;
 		metricWeightsConstraints.weightx = 1;
 		//metricWeightsConstraints.anchor = GridBagConstraints.LAST_LINE_START;
 		MetricWeightsPanel metricWeightsPanel = new MetricWeightsPanel(frame, weights);
 		leftSideLayout.setConstraints(metricWeightsPanel, metricWeightsConstraints);
 		leftSide.add(metricWeightsPanel);
+		
+		GridBagConstraints imperialWeightsConstraints = new GridBagConstraints();
+		imperialWeightsConstraints.gridx = 0;
+		imperialWeightsConstraints.gridy = 2;
+		imperialWeightsConstraints.weighty = 0.3;
+		imperialWeightsConstraints.weightx = 1;
+		ImperialWeightsPanel imperialWeightsPanel = new ImperialWeightsPanel(frame, weights);
+		rightSideLayout.setConstraints(imperialWeightsPanel, imperialWeightsConstraints);
+		rightSide.add(imperialWeightsPanel);
 		
 		
 		
