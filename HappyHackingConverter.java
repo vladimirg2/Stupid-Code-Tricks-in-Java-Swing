@@ -83,14 +83,17 @@ class HappyHackingConverter
 	 */
 	 enum DistanceMultipliers implements Converter
 	 {
-		 METERS(1),
 		 MILIMETERS(1000),
 		 CENTIMETERS(100),
+		 METERS(1),
 		 KILOMETERS(0.001),
-		 MILES(0.00062137273),
-		 YARDS(1.09361),
+		 INCHES(39.3701),
 		 FEET(3.28084),
-		 INCHES(39.3701);
+		 YARDS(1.09361),
+		 MILES(0.00062137273);
+		 
+		 
+		 
 		 private final double factor;
 		 private DistanceMultipliers(double f)
 		 {
@@ -112,12 +115,12 @@ class HappyHackingConverter
 	 
 	 enum WeightMultipliers implements Converter
 	 {
-		KILOGRAM(1),
 		MILLIGRAM(1000000),
 		GRAM(1000),
+		KILOGRAM(1),
+		METRIC_TON(0.001), //It's almost as if the metric units could share the factors.
 		LITER(1), //Water, option to add gasoline later.
 		MILLILITER(1000),
-		METRIC_TON(0.001), //It's almost as if the metric units could share the factors.
 		OUNZE(35.274),
 		TORY_OUNCE(32.1507466),
 		POUND(2.20462262185),
@@ -514,7 +517,7 @@ class HappyHackingConverter
 		filter = F;
 		((AbstractDocument)getStyledDocument()).setDocumentFilter(filter);;
 		multiplier = filter.getConverter();
-		df = new DecimalFormat("#.##");
+		df = new DecimalFormat("#.###");
 		}
 		protected CDocumentTemperatureFilter filter;
 		protected DecimalFormat df;
@@ -533,7 +536,7 @@ class HappyHackingConverter
 			try
 			{
 				StyledDocument doc = getStyledDocument();
-				System.out.printf("The fucking multiplier is: %f \n", multiplier.getFactor());
+				//System.out.printf("The fucking multiplier is: %f \n", multiplier.getFactor());
 				double actualValue = (multiplier.getDisplayValue(value.getValue()));
 				String actualValueAsString = df.format(actualValue);//Double.toString(actualValue);
 				
@@ -553,7 +556,7 @@ class HappyHackingConverter
 				displayedValue = "0";
 				}
 				double displayedValueAsDouble = Double.parseDouble(displayedValue);
-				if(!actualValueAsString.equals(displayedValue))
+				if(!actualValueAsString.equals(displayedValue) && displayedValueAsDouble != actualValue) //Allow user to enter trailing zeroes.
 				{
 				System.out.println("Repaint required");
 					try 
@@ -590,9 +593,79 @@ class HappyHackingConverter
 		
 		protected Converter multiplier;
 		protected ConvertibleValue value;
-		
-
 	 }
+	 
+	 
+	class LabelPair<Singular, Plural> 
+	{
+		protected Singular s;
+		protected Plural p;
+		public LabelPair(Singular S, Plural P)
+		{
+			s = S;
+			p = P;
+		}
+		public Singular getSingular() {return s;}
+		public Plural getPlural() {return p;}
+	}
+	 
+	 
+	class DisplayPanel extends JPanel implements DocumentListener 
+	{
+		protected LabelPair<String, String> labelPair;
+		protected JLabel label;
+		public DisplayPanel()
+		{
+			super();
+			setBackground(white);
+			setLayout(new FlowLayout(FlowLayout.LEADING));
+		}
+		public void addForDisplay(CTalkativeTextPane pane, LabelPair<String, String> lp)
+		{
+			labelPair = lp;
+			label = new JLabel(labelPair.getSingular(), JLabel.LEFT);
+			pane.getDocument().addDocumentListener(this);
+			add(pane);
+			add(label);
+		}
+		
+		public void changedUpdate(DocumentEvent e) { updateTheLabel(e); }
+		public void insertUpdate(DocumentEvent e) { updateTheLabel(e); }
+		public void removeUpdate(DocumentEvent e) { updateTheLabel(e); }
+		
+		void updateTheLabel(DocumentEvent e)
+		{
+			Document doc = (Document)e.getDocument();
+			String text = null;
+			try 
+			{
+				text = doc.getText(0, doc.getLength());
+			}
+			catch(BadLocationException ex)
+			{
+				text = null;
+			}
+			if(text != null)
+			{
+				try
+				{
+					double number = Double.parseDouble(text);
+					if(number > 1)
+					{
+						label.setText(labelPair.getPlural());
+					}
+					else
+					{
+						label.setText(labelPair.getSingular());
+					}
+				}
+				catch (NumberFormatException ex)
+				{
+				//Do nothing
+			}
+			}
+		}
+	}
 	 
 	/*
 	 * This inner class we will use will be a slightly customized JPanel.
@@ -602,7 +675,7 @@ class HappyHackingConverter
 		//Names for each text pane:
 		/*
 			Normaly inner classes can't have static members
-			because you can't initialize them bofore initializing
+			because you can't initialize them before initializing
 			the outer class which is not static. 
 			But I think it works for string litteral because
 			they are created at compile time. 
@@ -610,35 +683,21 @@ class HappyHackingConverter
 			an alternative would be to put the initalization of the
 			strings in the constructor beause they are not needed before that.
 		*/
-		protected static final String centegrade = "Centegrade";
-		protected static final String fahrenheit = "Fahrenheit";
-		protected static final String liter = "Liter (Water)";
-		protected static final String milliliter = "Milliliter";
-		protected static final String galon = "Galon";
-		protected static final String gram = "Gram";
-		protected static final String milligram = "Milligram";
-		protected static final String kilogram = "Kilogram";
-		protected static final String ton = "Tonne";
 		
-		protected static final String millimeter = "Millimeter(s)";
-		protected static final String centimeter = "Centimeter(s)";
-		protected static final String inch = "Inch(es)";
-		protected static final String meter = "Meter(s)";
-		protected static final String foot = "ft."; //FIXME: Add doucment listener to use Foot and Feet depending on the number.
-		protected static final String yard = "Yard(s)";
-		protected static final String kilometer = "Kilometer(s)";
-		protected static final String mile = "Mile(s)";
+		
+		
+		
+		
+		
+		
 		
 		protected CFrame frame;
 		protected ConvertibleValue cValue;  //reference to shared instance.
 	 
-		protected void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, String name)
+		protected void newTextPane(GridBagConstraints c, GridBagLayout gridbag, CDocumentTemperatureFilter filter, LabelPair names)
 		{
-			JPanel panel = new JPanel();
-			panel.setBackground(white);
-			panel.setLayout(new FlowLayout(FlowLayout.LEADING));
-			panel.add(new CTalkativeTextPane(cValue, filter));
-			panel.add(new JLabel(name, JLabel.LEFT));
+			DisplayPanel panel = new DisplayPanel();
+			panel.addForDisplay(new CTalkativeTextPane(cValue, filter), names);
 			gridbag.setConstraints(panel, c);
 			add(panel);
 			panel = null;
@@ -680,6 +739,12 @@ class HappyHackingConverter
 	 
 	 class MetricDistancesPanel extends CPanel
 	 {
+		protected static final String millimeter = "s)";
+		protected static final String centimeter = "(s)";
+		protected static final String meter = "(s)";
+		protected static final String kilometer = "(s)";
+		
+		protected final LabelPair[] labels = { new LabelPair("Millimeter","Millimeters"), new LabelPair("Centimeter", "Centimeters"), new LabelPair("Meter","Meters"), new LabelPair("Kilometer","Kilometers") };
 		public MetricDistancesPanel(CFrame F, ConvertibleValue CV)
 		{
 			super(F, CV);
@@ -693,19 +758,30 @@ class HappyHackingConverter
 			int x = 0;
 			int y = 0;
 			
-			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.MILIMETERS, frame), millimeter);
+			int just_metric = 0;
+			for(DistanceMultipliers dm : DistanceMultipliers.values())
+			{
+				if(just_metric > 3)
+				{
+					return;
+				}
+				newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, dm, frame), labels[just_metric]);
+				just_metric++;
+			}
+			/*newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.MILIMETERS, frame), millimeter);
 			
 			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.CENTIMETERS, frame), centimeter);
 			
 			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.METERS, frame), meter);
 			
-			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.KILOMETERS, frame), kilometer);
+			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.KILOMETERS, frame), kilometer);*/
 		}
 	 
 	 }//end of class DistancesPanel
 	 
 	 class ImperialDistancesPanel extends CPanel
 	 {
+		protected final LabelPair[] labels = { new LabelPair("Inch","Inches"), new LabelPair("Foot","Feet"), new LabelPair("Yard","Yards"), new LabelPair("Mile","Miles") };
 		public ImperialDistancesPanel(CFrame F, ConvertibleValue CV)
 		{
 			super(F, CV);
@@ -718,19 +794,30 @@ class HappyHackingConverter
 			int x = 0;
 			int y = 0;
 			
-			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.INCHES, frame), inch);
+			int ignore_metric = 0;
+			for(DistanceMultipliers dm : DistanceMultipliers.values())
+			{
+				if(ignore_metric > 3)
+				{
+					newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, dm, frame), labels[ignore_metric-4]);
+				}
+				ignore_metric++;
+			}
+			/*newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.INCHES, frame), inch);
 			
 			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.FEET, frame), foot);
 			
 			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.YARDS, frame), yard);
 			
-			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.MILES, frame), mile);
+			newTextPane(createConstraints(x,y++), gridbag, new CDocumentPositiveNumberFilter(cValue, DistanceMultipliers.MILES, frame), mile);*/
 		}
 	 
 	 }//End of ImperialDistancesPanel
 	 
 	 class TemperaturePanel extends CPanel
 	 {
+		protected static final String centegrade = "Centegrade";
+		protected static final String fahrenheit = "Fahrenheit";
 		protected TemperatureScales scale;
 		public TemperaturePanel(CFrame F, ConvertibleValue CV, TemperatureScales s)
 		{
@@ -742,18 +829,23 @@ class HappyHackingConverter
 		public void layoutConverters()
 		{
 			GridBagLayout gridbag = (GridBagLayout)getLayout();
-			String scaleString = centegrade;
+			LabelPair scalePair = null; 
 			if(scale == TemperatureScales.FAHRENHEIT)
 			{
-				scaleString = fahrenheit;
+				scalePair = new LabelPair(fahrenheit, fahrenheit);
 			}
-			newTextPane(createConstraints(0,0), gridbag, new CDocumentTemperatureFilter(cValue, new TemperatureFactors(scale), frame), scaleString);
+			else
+			{
+				scalePair = new LabelPair(centegrade, centegrade);
+			}
+			newTextPane(createConstraints(0,0), gridbag, new CDocumentTemperatureFilter(cValue, new TemperatureFactors(scale), frame), scalePair);
 			
 		}
 	 }
 	 
 	 class MetricWeightsPanel extends CPanel
 	 {
+		protected final LabelPair[] labels = { new LabelPair("Milligram","Milligrams"), new LabelPair("Gram","Grams"), new LabelPair("Kilogram","Kilograms"), new LabelPair("Tonne","Tonnes"), new LabelPair("Liter (Water)","Liters (Water)"), new LabelPair("Milliliter","Milliliters") };
 		public MetricWeightsPanel(CFrame F, ConvertibleValue CV)
 		{
 			super(F, CV);
@@ -765,12 +857,18 @@ class HappyHackingConverter
 			int x = 0;
 			int y = 0;
 			
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.MILLIGRAM, frame), milligram);
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.GRAM, frame), gram);
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.KILOGRAM, frame), kilogram);
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.METRIC_TON, frame), ton);
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.LITER, frame), liter);
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.MILLILITER, frame), milliliter);
+			int just_metric = 0;
+			for(WeightMultipliers wm : WeightMultipliers.values())
+			{
+				if(just_metric > 5) 
+				{
+					return;
+				}
+				
+				newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, wm, frame), labels[just_metric]);
+				just_metric++;
+			}
+			
 		}
 	 }
 	 
@@ -778,7 +876,7 @@ class HappyHackingConverter
 	class ImperialWeightsPanel extends CPanel
 	{
 		//The labels must match the enum delcaration order.
-		protected final String[] labels = {"Ounce", "Troy ounce", "Pound", "Imperial gallon (UK)", "US gallon", "Long ton (UK)", "Short ton (US)", "who", "what", "where"};
+		protected final LabelPair[] labels = { new LabelPair("Ounce","Ounces"), new LabelPair("Troy ounce", "Troy ounces"), new LabelPair("Pound", "Pounds"), new LabelPair("Imperial gallon (UK)", "Imperial gallons (UK)"), new LabelPair("US gallon", "US gallons"), new LabelPair("Long ton (UK)", "Long tons (UK)"), new LabelPair("Short ton (US)","Short tons (US)")};
 		public ImperialWeightsPanel(CFrame F, ConvertibleValue CV)
 		{
 			super(F, CV);
@@ -793,25 +891,19 @@ class HappyHackingConverter
 			int ignore_metric = 0;
 			for(WeightMultipliers wm : WeightMultipliers.values())
 			{
-				ignore_metric++;
 				/*
 				values returns all enum values in order of declartion but we 
 				want to ingore the first 6 (metric) values.
 				*/
-				if(ignore_metric > 6)
+				if(ignore_metric > 5)
 				{
-					newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, wm, frame), labels[ignore_metric-7]);
+					newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, wm, frame), labels[ignore_metric-6]);
 				}
+				ignore_metric++;
 				
 			}
 			//Is there a cleaner way to iterate over a chunk of what values() returns?
-			/*newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.OUNZE, frame), labels[0]);
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.TORY_OUNCE, frame), labels[1]);
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.POUND, frame), labels[2]);
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.UK_GALON, frame), labels[3]);
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.US_GALON, frame), labels[4]);
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.LONG_TON, frame), labels[5]);
-			newTextPane(createConstraints(x, y++), gridbag, new CDocumentPositiveNumberFilter(cValue, WeightMultipliers.SHORT_TON, frame), labels[6]); */
+	
 			
 		}
 	}
@@ -848,6 +940,10 @@ class HappyHackingConverter
 		JPanel leftSide = new JPanel(leftSideLayout);
 		leftSide.setBackground(white);
 		
+		GridBagLayout rightSideLayout = new GridBagLayout();
+		JPanel rightSide = new JPanel(rightSideLayout);
+		rightSide.setBackground(white);
+		
 		GridBagConstraints metricTemperatureConstraints = new GridBagConstraints();
 		metricTemperatureConstraints.gridx = 0;
 		metricTemperatureConstraints.gridy = 0;
@@ -869,9 +965,7 @@ class HappyHackingConverter
 		leftSideLayout.setConstraints(metricDistancesPanel, metricDistancesPanelConstraints);
 		leftSide.add(metricDistancesPanel);
 		
-		GridBagLayout rightSideLayout = new GridBagLayout();
-		JPanel rightSide = new JPanel(rightSideLayout);
-		rightSide.setBackground(white);
+		
 		
 		GridBagConstraints fahrenheitConstraints = new GridBagConstraints();
 		fahrenheitConstraints.gridx = 0;
