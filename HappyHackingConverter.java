@@ -616,17 +616,59 @@ class HappyHackingConverter
 		protected JLabel label;
 		public DisplayPanel()
 		{
-			super();
+			super(new GridBagLayout());
 			setBackground(white);
-			setLayout(new FlowLayout(FlowLayout.LEADING));
 		}
 		public void addForDisplay(CTalkativeTextPane pane, LabelPair<String, String> lp)
 		{
+			GridBagLayout gridbag = (GridBagLayout)getLayout();
 			labelPair = lp;
 			label = new JLabel(labelPair.getSingular(), JLabel.LEFT);
 			pane.getDocument().addDocumentListener(this);
+			
+			GridBagConstraints c = new GridBagConstraints();
+			c.gridx = 0;
+			c.gridy = 0;
+			c.gridwidth = 1;
+			c.gridheight = 1;
+			//c.ipadx = 1;
+			c.weightx = 0.1; 
+			c.weighty = 0.1;
+			//c.fill = GridBagConstraints.HORIZONTAL;
+			c.anchor = GridBagConstraints.LINE_START;
+			c.insets = new Insets(0,20,0,00);
+			gridbag.setConstraints(pane, c);
 			add(pane);
+			
+			c = new GridBagConstraints();
+			c.gridx = 1;
+			c.gridy = 0;
+			c.gridwidth = 1;
+			c.gridheight = 1;
+			//c.ipadx = 1;
+			c.weightx = 0.1; 
+			c.weighty = 0.1;
+			c.anchor = GridBagConstraints.LINE_START;
+			c.insets = new Insets(0,0,0,20);
+			gridbag.setConstraints(label, c);
 			add(label);
+			
+			JPanel placeHolder = new JPanel();
+			placeHolder.setBackground(white);
+			c = new GridBagConstraints();
+			c.gridx = 2;
+			c.gridy = 0;
+			c.gridwidth = 1;
+			c.gridheight = 1;
+			//c.ipadx = 1;
+			c.weightx = 0.8; 
+			c.weighty = 0.8;
+			c.fill = GridBagConstraints.BOTH;
+			c.anchor = GridBagConstraints.LINE_END;
+			gridbag.setConstraints(placeHolder, c);
+			add(placeHolder);
+			
+			c = null;
 		}
 		
 		public void changedUpdate(DocumentEvent e) { updateTheLabel(e); }
@@ -949,6 +991,7 @@ class HappyHackingConverter
 		metricTemperatureConstraints.gridy = 0;
 		metricTemperatureConstraints.weighty = 0.3;
 		metricTemperatureConstraints.weightx = 1;
+		metricTemperatureConstraints.fill = GridBagConstraints.HORIZONTAL;
 		//metricTemperatureConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
 		JPanel metricTemperaturePanel = new TemperaturePanel(frame, temperatures, TemperatureScales.CENTIGRADE);
 		leftSideLayout.setConstraints(metricTemperaturePanel, metricTemperatureConstraints);
@@ -959,8 +1002,8 @@ class HappyHackingConverter
 		metricDistancesPanelConstraints.gridy = 1;
 		metricDistancesPanelConstraints.weighty = 0.3;
 		metricDistancesPanelConstraints.weightx = 1;
-		metricDistancesPanelConstraints.fill = GridBagConstraints.VERTICAL;
-		//metricDistancesPanelConstraints.anchor = GridBagConstraints.LINE_START;
+		metricDistancesPanelConstraints.fill = GridBagConstraints.BOTH;
+		//metricDistancesPanelConstraints.anchor = GridBagConstraints.LINE_END;
 		JPanel metricDistancesPanel = new MetricDistancesPanel(frame, distances);
 		leftSideLayout.setConstraints(metricDistancesPanel, metricDistancesPanelConstraints);
 		leftSide.add(metricDistancesPanel);
@@ -972,6 +1015,7 @@ class HappyHackingConverter
 		fahrenheitConstraints.gridy = 0;
 		fahrenheitConstraints.weighty = 0.3;
 		fahrenheitConstraints.weightx = 1;
+		fahrenheitConstraints.fill = GridBagConstraints.HORIZONTAL;
 		//fahrenheitConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
 		JPanel fahrenheitTemperaturePanel = new TemperaturePanel(frame, temperatures, TemperatureScales.FAHRENHEIT);
 		rightSideLayout.setConstraints(fahrenheitTemperaturePanel, fahrenheitConstraints);
@@ -983,7 +1027,7 @@ class HappyHackingConverter
 		imperialDistancesPanelConstraints.gridy = 1;
 		imperialDistancesPanelConstraints.weighty = 0.3;
 		imperialDistancesPanelConstraints.weightx = 1;
-		imperialDistancesPanelConstraints.fill = GridBagConstraints.VERTICAL;
+		imperialDistancesPanelConstraints.fill = GridBagConstraints.BOTH;
 		//imperialDistancesPanelConstraints.anchor = GridBagConstraints.LINE_START;
 		JPanel imperialDistancesPanel = new ImperialDistancesPanel(frame, distances);
 		rightSideLayout.setConstraints(imperialDistancesPanel, imperialDistancesPanelConstraints);
@@ -994,6 +1038,7 @@ class HappyHackingConverter
 		metricWeightsConstraints.gridy = 2;
 		metricWeightsConstraints.weighty = 0.3;
 		metricWeightsConstraints.weightx = 1;
+		metricWeightsConstraints.fill = GridBagConstraints.HORIZONTAL;
 		//metricWeightsConstraints.anchor = GridBagConstraints.LAST_LINE_START;
 		MetricWeightsPanel metricWeightsPanel = new MetricWeightsPanel(frame, weights);
 		leftSideLayout.setConstraints(metricWeightsPanel, metricWeightsConstraints);
@@ -1004,6 +1049,7 @@ class HappyHackingConverter
 		imperialWeightsConstraints.gridy = 2;
 		imperialWeightsConstraints.weighty = 0.3;
 		imperialWeightsConstraints.weightx = 1;
+		imperialWeightsConstraints.fill = GridBagConstraints.HORIZONTAL;
 		ImperialWeightsPanel imperialWeightsPanel = new ImperialWeightsPanel(frame, weights);
 		rightSideLayout.setConstraints(imperialWeightsPanel, imperialWeightsConstraints);
 		rightSide.add(imperialWeightsPanel);
