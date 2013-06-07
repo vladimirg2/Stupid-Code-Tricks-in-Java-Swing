@@ -929,6 +929,12 @@ class HappyHackingConverter
 			int x = 0;
 			int y = 0;
 			
+			GridBagConstraints c = createConstraints(x,y++);
+			ImageIcon icon = createImageIcon("images/kg.png", "EU");
+			JLabel label = new JLabel(icon);
+			gridbag.setConstraints(label, c);
+			add(label);
+			
 			int just_metric = 0;
 			for(WeightMultipliers wm : WeightMultipliers.values())
 			{
@@ -959,6 +965,12 @@ class HappyHackingConverter
 			GridBagLayout gridbag = (GridBagLayout)getLayout();
 			int x = 0;
 			int y = 0;
+			
+			GridBagConstraints c = createConstraints(x,y++);
+			ImageIcon icon = createImageIcon("images/lb.png", "EU");
+			JLabel label = new JLabel(icon);
+			gridbag.setConstraints(label, c);
+			add(label);
 			
 			int ignore_metric = 0;
 			for(WeightMultipliers wm : WeightMultipliers.values())
