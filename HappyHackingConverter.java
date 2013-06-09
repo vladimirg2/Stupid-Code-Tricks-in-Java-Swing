@@ -126,10 +126,24 @@ class HappyHackingConverter
 		OUNZE(35.274),
 		TORY_OUNCE(32.1507466),
 		POUND(2.20462262185),
-		UK_GALON(0.219969),
-		US_GALON(0.264172),
+		
 		LONG_TON(0.000984207), //United Kingdom
-		SHORT_TON(0.00110231); //United States
+		UK_GALON(0.219969),
+		UK_QUART(0.879877),
+		UK_PINT(1.75975),
+		UK_TBL_SPN(56.3121),
+		UK_TSPN(168.936),
+		STONE(0.157473),
+		
+		SHORT_TON(0.00110231), //United States
+		US_GALON(0.264172),
+		US_QUART(1.05669),
+		US_PINT(2.11338),
+		US_CUP(4.22675),
+		US_TBL_SPN(67.628),
+		US_TSPN(202.884);
+		
+		
 		private final double factor;
 		private WeightMultipliers(double f)
 		{
@@ -954,7 +968,7 @@ class HappyHackingConverter
 	class ImperialWeightsPanel extends CPanel
 	{
 		//The labels must match the enum delcaration order.
-		protected final LabelPair[] labels = { new LabelPair("Ounce","Ounces"), new LabelPair("Troy ounce", "Troy ounces"), new LabelPair("Pound", "Pounds"), new LabelPair("Imperial gallon (UK)", "Imperial gallons (UK)"), new LabelPair("US gallon", "US gallons"), new LabelPair("Long ton (UK)", "Long tons (UK)"), new LabelPair("Short ton (US)","Short tons (US)")};
+		protected final LabelPair[] labels = { new LabelPair("Ounce","Ounces"), new LabelPair("Troy ounce", "Troy ounces"), new LabelPair("Pound", "Pounds"), new LabelPair("Long ton (UK)", "Long tons (UK)"), new LabelPair("Imperial gallon", "Imperial gallons"), new LabelPair("Imperial quart", "Imperial quarts"), new LabelPair("Imperial pint", "Imperial pints"), new LabelPair("Imperial tablespoon", "Imperial tablespoons"), new LabelPair("Imperial teaspoon", "Imperial teaspoons"), new LabelPair("Stone", "Stones"), new LabelPair("Short ton (US)","Short tons (US)"), new LabelPair("US gallon", "US gallons"), new LabelPair("US quart", "US quarts"), new LabelPair("US pint", "US pints"), new LabelPair("US Cup", "US cups"), new LabelPair("US tablespoon", "US tablespoons"), new LabelPair("US teaspoon", "US teaspoons")};
 		public ImperialWeightsPanel(CFrame F, ConvertibleValue CV)
 		{
 			super(F, CV);
@@ -1103,7 +1117,7 @@ class HappyHackingConverter
 		contentPane.add(split);
 		frame.validate();
 		frame.pack();
-		frame.setSize(600,800);
+		frame.setSize(600,997);
 		split.setResizeWeight(0.5);
 		split.setDividerLocation(0.5);
 	}//end of HappyHackingConverter constructor
