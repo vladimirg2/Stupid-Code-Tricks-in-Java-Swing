@@ -556,10 +556,30 @@ class HappyHackingConverter
       filter = F;
       ((AbstractDocument)getStyledDocument()).setDocumentFilter(filter);;
       multiplier = filter.getConverter();
-      df = new DecimalFormat("#.###");
+      df = new DecimalFormat("#.##");
+      bypassFilterAndSetText(getStyledDocument(), "0");
     }
     protected DocumentTemperatureFilter filter;
     protected DecimalFormat df;
+
+    protected void bypassFilterAndSetText(StyledDocument doc, String text)
+    {
+      try
+        {
+          filter.setUpdateValue(false);
+          doc.remove(0, doc.getLength());
+          doc.insertString(0, text, null);
+
+        }
+      catch(BadLocationException e)
+        {
+          //Beep?
+        }
+      finally
+        {
+          filter.setUpdateValue(true);
+        }
+    }
 
     /**
      * Gets the displayed value, and uses the converter to convert the
@@ -594,21 +614,7 @@ class HappyHackingConverter
           double displayedValueAsDouble = Double.parseDouble(displayedValue);
           if(!actualValueAsString.equals(displayedValue) && displayedValueAsDouble != actualValue) //Allow user to enter trailing zeroes.
             {
-              try
-                {
-                  filter.setUpdateValue(false);
-                  doc.remove(0, doc.getLength());
-                  doc.insertString(0, actualValueAsString, null);
-
-                }
-              catch(BadLocationException e)
-                {
-                  //Beep?
-                }
-              finally
-                {
-                  filter.setUpdateValue(true);
-                }
+              bypassFilterAndSetText(doc, actualValueAsString);
             }
         }
       catch (NumberFormatException e)
