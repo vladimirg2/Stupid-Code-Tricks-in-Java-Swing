@@ -932,7 +932,7 @@ class HappyHackingConverter
   */
   class TemperaturePanel extends ConverterPanel
   {
-    protected static final String centegrade = "Centegrade";
+    protected static final String centegrade = "Celsius";
     protected static final String fahrenheit = "Fahrenheit";
     protected TemperatureScales scale;
     public TemperaturePanel(CFrame F, ConvertibleValue CV, TemperatureScales s)
