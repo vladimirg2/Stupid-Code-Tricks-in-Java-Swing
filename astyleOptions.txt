@@ -1,0 +1,11 @@
+# Style file for java, because I don't like the official Java style.
+
+--style=gnu # Most readable in my opinion.
+
+--indent=spaces=2 #Goes well with the Gnu style, and is all that's needed.
+
+--add-brackets #force brackets around one line conditional statements 
+
+--break-closing-brackets
+
+
