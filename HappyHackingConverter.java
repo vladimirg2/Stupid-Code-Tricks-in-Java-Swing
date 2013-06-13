@@ -19,6 +19,7 @@ import javax.swing.border.BevelBorder;
 import java.awt.Dimension;
 import javax.swing.event.*;
 import java.text.DecimalFormat;
+import java.math.RoundingMode;
 
 
 
@@ -556,11 +557,12 @@ class HappyHackingConverter
       filter = F;
       ((AbstractDocument)getStyledDocument()).setDocumentFilter(filter);;
       multiplier = filter.getConverter();
-      df = new DecimalFormat("#.##");
+      df = new java.text.DecimalFormat("#.##");
+	  df.setRoundingMode(RoundingMode.UP);
       bypassFilterAndSetText(getStyledDocument(), "0");
     }
     protected DocumentTemperatureFilter filter;
-    protected DecimalFormat df;
+    protected java.text.DecimalFormat df;
 
     protected void bypassFilterAndSetText(StyledDocument doc, String text)
     {
