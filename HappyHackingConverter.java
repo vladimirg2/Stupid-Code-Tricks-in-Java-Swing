@@ -558,7 +558,6 @@ class HappyHackingConverter
       ((AbstractDocument)getStyledDocument()).setDocumentFilter(filter);;
       multiplier = filter.getConverter();
       df = new java.text.DecimalFormat("#.##");
-	  df.setRoundingMode(RoundingMode.UP);
       bypassFilterAndSetText(getStyledDocument(), "0");
     }
     protected DocumentTemperatureFilter filter;
