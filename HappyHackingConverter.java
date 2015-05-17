@@ -574,7 +574,7 @@ class HappyHackingConverter
         }
       catch(BadLocationException e)
         {
-          //Beep?
+          java.awt.Toolkit.getDefaultToolkit().beep();
         }
       finally
         {
